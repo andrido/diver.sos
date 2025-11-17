@@ -1,19 +1,33 @@
 package com.ufc.diversos.model;
 
-
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-public class Usuario implements IUsuario{
+@Getter
+@Setter
+@Entity
+@Table(name = "usuarios")
+public class Usuario implements IUsuario {
+
+ @Id
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
  private int id;
+
  private String nome;
  private String email;
  private String username;
  private String senha;
  private String telefone;
  private String cpf;
- private Endereco endereco;
- private statusUsuario status;
- private tipoDeUsuario tipoDeUsuario;
 
+ @Embedded
+ private Endereco endereco;
+
+ @Enumerated(EnumType.STRING)
+ private statusUsuario status;
+
+ @Enumerated(EnumType.STRING)
+ private tipoDeUsuario tipoDeUsuario;
 }
