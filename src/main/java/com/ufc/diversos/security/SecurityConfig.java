@@ -36,20 +36,16 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                // Rotas públicas
+                .requestMatchers("/auth/login", "/usuarios").permitAll()
+                .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
 
-                        // login liberado
-                        .requestMatchers("/auth/login").permitAll()
+                // Rotas restritas para ADMIN e MOD
+                .requestMatchers("/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                .requestMatchers("/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // cadastro do usuário liberado
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
-
-                        // rotas de gerenciamento de usuários
-                        .requestMatchers("/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-
-                        // rotas de vagas
-                        .requestMatchers("/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-
-                        .anyRequest().authenticated()
+                // Todo o resto exige estar logado
+                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
