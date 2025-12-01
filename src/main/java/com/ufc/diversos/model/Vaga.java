@@ -2,7 +2,6 @@ package com.ufc.diversos.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -23,8 +22,19 @@ public class Vaga {
     @Column(nullable = false)
     private String empresa;
 
+    // NOVO CAMPO
+    @Column(nullable = true)
+    private String linkDaVaga;
+
+    @Column(nullable = false)
+    private String cidade; // NOVO CAMPO para filtro
+
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
+
+    // NOVO CAMPO: Data limite para inscrição
+    @Column(nullable = true)
+    private LocalDateTime dataLimite;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -33,6 +43,11 @@ public class Vaga {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoVaga tipo;
+
+    // NOVO ENUM: Modalidade
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ModalidadeVaga modalidade;
 
     public enum StatusVaga {
         ATIVA,
@@ -44,5 +59,11 @@ public class Vaga {
         NAO_AFIRMATIVA,
         EDITAL,
         NAO_EDITAL
+    }
+
+    public enum ModalidadeVaga {
+        PRESENCIAL,
+        REMOTO,
+        HIBRIDO
     }
 }

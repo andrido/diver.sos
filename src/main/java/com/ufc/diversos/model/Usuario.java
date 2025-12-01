@@ -1,16 +1,14 @@
 package com.ufc.diversos.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "usuarios")
 public class Usuario implements UserDetails {
@@ -34,6 +32,14 @@ public class Usuario implements UserDetails {
 
  @Enumerated(EnumType.STRING)
  private tipoDeUsuario tipoDeUsuario;
+
+ @ManyToMany
+ @JoinTable(
+         name = "usuarios_vagas_salvas",
+         joinColumns = @JoinColumn(name = "usuario_id"),
+         inverseJoinColumns = @JoinColumn(name = "vaga_id")
+ )
+ private List<Vaga> vagasSalvas;
 
  // ---------- MÉTODOS DO USERDETAILS ----------
  @Override

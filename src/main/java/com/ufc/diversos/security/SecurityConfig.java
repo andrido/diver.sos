@@ -36,20 +36,36 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                // Rotas públicas
-                .requestMatchers("/auth/login", "/usuarios").permitAll()
-                .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
 
-                // Rotas restritas para ADMIN e MOD
-                .requestMatchers("/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                .requestMatchers("/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        // --- ROTAS PÚBLICAS ---
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll() // Criar conta é público
+                        .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
 
-                // Todo o resto exige estar logado
-                .anyRequest().authenticated()
+                        // --- ROTAS DO USUÁRIO LOGADO (MEU PERFIL) ---
+                        .requestMatchers("/usuarios/me/**").authenticated()
+
+
+                        .requestMatchers(HttpMethod.PUT, "/usuarios/**").authenticated()
+
+                        // --- ROTAS RESTRITAS (ADMIN/MOD) ---
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+                        // Vagas (Criação/Edição/Deleção) restritas
+                        .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.PUT, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+                        // Notícias restritas
+                        .requestMatchers("/noticias/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+                        // --- RESTO ---
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 }
