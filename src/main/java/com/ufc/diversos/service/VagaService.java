@@ -34,18 +34,16 @@ public class VagaService {
         return vagaRepository.findById(id);
     }
 
-    public Vaga criar(Vaga vaga) {
-        if (vaga.getTitulo() == null || vaga.getTitulo().isBlank()) {
-            throw new IllegalArgumentException("Título é obrigatório");
-        }
 
+
+    public Vaga criar(Vaga vaga) {
 
         vaga.setDataCriacao(LocalDateTime.now());
-
 
         if (vaga.getStatus() == null) {
             vaga.setStatus(StatusVaga.ATIVA);
         }
+
 
         return vagaRepository.save(vaga);
     }
@@ -59,7 +57,7 @@ public class VagaService {
             atualizarSeValido(dados.getLinkDaVaga(), v::setLinkDaVaga);
             atualizarSeValido(dados.getCidade(), v::setCidade);
 
-            // Objetos/Enums (verifica só nulo)
+
             atualizarSePresente(dados.getDataLimite(), v::setDataLimite);
             atualizarSePresente(dados.getStatus(), v::setStatus);
             atualizarSePresente(dados.getTipo(), v::setTipo);
@@ -85,4 +83,6 @@ public class VagaService {
             setter.accept(valor);
         }
     }
+
+
 }

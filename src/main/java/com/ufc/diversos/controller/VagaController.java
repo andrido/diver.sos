@@ -3,6 +3,7 @@ package com.ufc.diversos.controller;
 import com.ufc.diversos.model.Vaga;
 import com.ufc.diversos.repository.VagaRepository;
 import com.ufc.diversos.service.VagaService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/vagas")
@@ -34,12 +36,12 @@ public class VagaController {
     }
 
     @PostMapping
-    public ResponseEntity<Vaga> createVaga(@RequestBody Vaga vaga) {
+    public ResponseEntity<Vaga> createVaga(@Valid @RequestBody Vaga vaga) {
         return ResponseEntity.ok(vagaService.criar(vaga));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vaga> updateVaga(@PathVariable Long id, @RequestBody Vaga vagaDetails) {
+    public ResponseEntity<Vaga> updateVaga(@PathVariable Long id, @Valid @RequestBody Vaga vagaDetails) {
         return vagaService.atualizar(id, vagaDetails)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
