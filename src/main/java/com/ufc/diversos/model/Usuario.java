@@ -19,7 +19,6 @@ public class Usuario implements UserDetails {
 
  private String nome;
  private String email;
- private String username;
  private String senha;
  private String telefone;
  private String cpf;
@@ -51,7 +50,7 @@ public class Usuario implements UserDetails {
  public String getPassword() { return senha; }
 
  @Override
- public String getUsername() { return username; }
+ public String getUsername() { return email; }
 
  @Override
  public boolean isAccountNonExpired() { return true; }

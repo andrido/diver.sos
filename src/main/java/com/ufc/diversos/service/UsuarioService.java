@@ -35,8 +35,8 @@ public class UsuarioService {
 
     public Usuario getUsuarioLogado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-        return usuarioRepository.findByUsername(username)
+        String email = auth.getName();
+        return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Erro de segurança: Usuário logado não encontrado."));
     }
 
@@ -62,7 +62,6 @@ public class UsuarioService {
             // 2. Atualização de Campos Básicos (Strings)
             atualizarSeValido(dadosAtualizados.getNome(), usuarioAlvo::setNome);
             atualizarSeValido(dadosAtualizados.getEmail(), usuarioAlvo::setEmail);
-            atualizarSeValido(dadosAtualizados.getUsername(), usuarioAlvo::setUsername);
             atualizarSeValido(dadosAtualizados.getTelefone(), usuarioAlvo::setTelefone);
             atualizarSeValido(dadosAtualizados.getCpf(), usuarioAlvo::setCpf);
 

@@ -13,12 +13,12 @@ public class Noticia {
 
     private String titulo;
 
-    @Column(columnDefinition = "TEXT") // Permite textos longos
+    @Column(columnDefinition = "TEXT")
     private String conteudo;
 
     private LocalDateTime dataPublicacao;
 
-    // Opcional: Quem postou?
+
     @ManyToOne
     private Usuario autor;
 }
