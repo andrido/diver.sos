@@ -1,5 +1,6 @@
 package com.ufc.diversos.service;
 
+import com.ufc.diversos.model.Habilidade;
 import com.ufc.diversos.model.Vaga;
 // Importando os Enums para não precisar escrever Vaga.StatusVaga toda hora no código
 import com.ufc.diversos.model.Vaga.StatusVaga;
@@ -7,8 +8,9 @@ import com.ufc.diversos.model.Vaga.TipoVaga;
 import com.ufc.diversos.model.Vaga.ModalidadeVaga;
 import com.ufc.diversos.repository.VagaRepository;
 import org.springframework.stereotype.Service;
-
+import com.ufc.diversos.repository.HabilidadeRepository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +18,15 @@ import java.util.Optional;
 public class VagaService {
 
     private final VagaRepository vagaRepository;
+    ;
+    private final HabilidadeRepository habilidadeRepository;
 
-    public VagaService(VagaRepository vagaRepository) {
+    public VagaService(VagaRepository vagaRepository, HabilidadeRepository habilidadeRepository) {
         this.vagaRepository = vagaRepository;
+        this.habilidadeRepository = habilidadeRepository;
     }
-
     public List<Vaga> listarTodas() {
-        return vagaRepository.findAll();
+        return vagaRepository.findByStatus(StatusVaga.ATIVA);
     }
 
 
@@ -63,6 +67,25 @@ public class VagaService {
             atualizarSePresente(dados.getTipo(), v::setTipo);
             atualizarSePresente(dados.getModalidade(), v::setModalidade);
 
+            if (dados.getHabilidades() != null) {
+                List<Habilidade> novasHabilidades = new ArrayList<>();
+
+                for (Habilidade h : dados.getHabilidades()) {
+                    // Só tentamos buscar se tiver ID
+                    if (h.getId() != null) {
+                        Optional<Habilidade> habDoBanco = habilidadeRepository.findById(h.getId());
+
+                        if (habDoBanco.isPresent()) {
+                            novasHabilidades.add(habDoBanco.get());
+                        } else {
+                            System.out.println("Habilidade com ID " + h.getId() + " não encontrada.");
+                        }
+                    }
+                }
+
+                //
+                v.setHabilidades(novasHabilidades);
+            }
             return vagaRepository.save(v);
         });
     }

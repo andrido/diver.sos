@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -46,6 +47,7 @@ public class Vaga {
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", shape = JsonFormat.Shape.STRING)
     @Column(nullable = true)
     private LocalDateTime dataLimite; // Não está com @NotNull, então é opcional
 
@@ -64,9 +66,18 @@ public class Vaga {
     @Column(nullable = false)
     private ModalidadeVaga modalidade;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "vagas_habilidades",
+            joinColumns = @JoinColumn(name = "vaga_id"),
+            inverseJoinColumns = @JoinColumn(name = "habilidade_id")
+    )
+    private List<Habilidade> habilidades;
+
     public enum StatusVaga {
         ATIVA,
-        PREENCHIDA
+        PREENCHIDA,
+        INATIVA
     }
 
     public enum TipoVaga {

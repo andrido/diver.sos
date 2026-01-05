@@ -1,9 +1,7 @@
 package com.ufc.diversos.service;
 
-import com.ufc.diversos.model.Endereco;
-import com.ufc.diversos.model.Usuario;
-import com.ufc.diversos.model.Vaga;
-import com.ufc.diversos.model.tipoDeUsuario;
+import com.ufc.diversos.model.*;
+import com.ufc.diversos.repository.HabilidadeRepository;
 import com.ufc.diversos.repository.UsuarioRepository;
 import com.ufc.diversos.repository.VagaRepository;
 import org.springframework.security.core.Authentication;
@@ -12,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -21,16 +20,18 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final VagaRepository vagaRepository;
+    private final HabilidadeRepository habilidadeRepository; // <--- 1. INJETAR O REPOSITÓRIO
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           VagaRepository vagaRepository,
+                          HabilidadeRepository habilidadeRepository, // <--- 2. ADICIONAR NO CONSTRUTOR
                           BCryptPasswordEncoder encoder) {
         this.usuarioRepository = usuarioRepository;
         this.vagaRepository = vagaRepository;
+        this.habilidadeRepository = habilidadeRepository;
         this.passwordEncoder = encoder;
     }
-
     // --- MÉTODOS DE SUPORTE (SEGURANÇA) ---
 
     public Usuario getUsuarioLogado() {
@@ -64,6 +65,7 @@ public class UsuarioService {
             atualizarSeValido(dadosAtualizados.getEmail(), usuarioAlvo::setEmail);
             atualizarSeValido(dadosAtualizados.getTelefone(), usuarioAlvo::setTelefone);
             atualizarSeValido(dadosAtualizados.getCpf(), usuarioAlvo::setCpf);
+            atualizarSeValido(dadosAtualizados.getPronomes(), usuarioAlvo::setPronomes);
 
             // 3. Atualização de Senha
             if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isEmpty()) {
@@ -75,6 +77,19 @@ public class UsuarioService {
 
             // 5. Atualização de Cargos/Status (Regras complexas extraídas)
             aplicarRegrasDeHierarquia(usuarioLogado, usuarioAlvo, dadosAtualizados);
+
+                    if (dadosAtualizados.getHabilidades() != null) {
+                        List<Habilidade> novasHabilidades = new ArrayList<>();
+
+                        for (Habilidade h : dadosAtualizados.getHabilidades()) {
+                            if (h.getId() != null) {
+                                habilidadeRepository.findById(h.getId())
+                                        .ifPresent(novasHabilidades::add);
+                            }
+                        }
+                        usuarioAlvo.setHabilidades(novasHabilidades);
+
+                    }
 
             return usuarioRepository.save(usuarioAlvo);
         });

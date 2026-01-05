@@ -1,5 +1,7 @@
 package com.ufc.diversos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,10 +20,17 @@ public class Usuario implements UserDetails {
  private int id;
 
  private String nome;
+
  private String email;
+
+ @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
  private String senha;
+
  private String telefone;
+
  private String cpf;
+
+ private String pronomes;
 
  @Embedded
  private Endereco endereco;
@@ -40,6 +49,14 @@ public class Usuario implements UserDetails {
  )
  private List<Vaga> vagasSalvas;
 
+ @ManyToMany(fetch = FetchType.EAGER)
+ @JoinTable(
+         name = "usuarios_habilidades", // Nome da tabela de ligação
+         joinColumns = @JoinColumn(name = "usuario_id"),
+         inverseJoinColumns = @JoinColumn(name = "habilidade_id")
+ )
+ private List<Habilidade> habilidades;
+
  // ---------- MÉTODOS DO USERDETAILS ----------
  @Override
  public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -47,6 +64,7 @@ public class Usuario implements UserDetails {
  }
 
  @Override
+ @JsonIgnore
  public String getPassword() { return senha; }
 
  @Override

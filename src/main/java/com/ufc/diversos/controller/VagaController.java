@@ -41,7 +41,7 @@ public class VagaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vaga> updateVaga(@PathVariable Long id, @Valid @RequestBody Vaga vagaDetails) {
+    public ResponseEntity<Vaga> updateVaga(@PathVariable Long id, @RequestBody Vaga vagaDetails) {
         return vagaService.atualizar(id, vagaDetails)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
