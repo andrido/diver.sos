@@ -37,31 +37,38 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // --- ROTAS PÚBLICAS ---
+                        // --- 1. ROTAS TOTALMENTE PÚBLICAS (Visitante) ---
                         .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll() // Criar conta é público
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/habilidades/**").permitAll()
 
-                        // --- ROTAS DO USUÁRIO LOGADO (MEU PERFIL) ---
-                        .requestMatchers("/usuarios/me/**").authenticated()
+                        // --- 2. REGRAS DE ADMIN / MODERADOR (Escrita Sensível) ---
 
-
-                        .requestMatchers(HttpMethod.PUT, "/usuarios/**").authenticated()
-
-                        // --- ROTAS RESTRITAS (ADMIN/MOD) ---
-                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-
-                        // Vagas (Criação/Edição/Deleção) restritas
+                        // Vagas
                         .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.PUT, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Notícias restritas
+                        // Notícias
                         .requestMatchers("/noticias/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // --- RESTO ---
+                        // Grupos (Edição/Criação/Deleção restritas)
+                        .requestMatchers(HttpMethod.POST, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.PUT, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR") // <--- Adicionado PUT
+                        .requestMatchers(HttpMethod.DELETE, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+                        // Habilidades (Criar novas techs)
+                        .requestMatchers(HttpMethod.POST, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+                        // Gestão de Usuários
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+
+
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

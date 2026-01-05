@@ -26,16 +26,16 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO dto) {
 
-        // 1. Alterado para findByEmail
+
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com este e-mail"));
 
-        // 2. Valida Senha
+
         if (!encoder.matches(dto.getSenha(), usuario.getSenha())) {
             throw new RuntimeException("Senha inválida");
         }
 
-        // 3. Gera Token
+
         String token = tokenProvider.gerarToken(usuario);
 
         // 4. Retorna o objeto completo (Token + Role + Nome)

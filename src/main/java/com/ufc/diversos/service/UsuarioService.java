@@ -95,7 +95,7 @@ public class UsuarioService {
         });
     }
 
-    // --- MÉTODOS PRIVADOS DE LÓGICA (Refatoração) ---
+    // --- MÉTODOS PRIVADOS DE LÓGICA  ---
 
     private void validarPermissaoDeEdicao(Usuario logado, Usuario alvo, int idAlvo) {
         boolean isStaff = logado.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR ||
