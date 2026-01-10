@@ -1,19 +1,18 @@
 package com.ufc.diversos.service;
 
 import com.ufc.diversos.model.*;
-import com.ufc.diversos.repository.GrupoRepository;
-import com.ufc.diversos.repository.HabilidadeRepository;
-import com.ufc.diversos.repository.UsuarioRepository;
-import com.ufc.diversos.repository.VagaRepository;
+import com.ufc.diversos.repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID; // Importante para gerar o token
 import java.util.function.Consumer;
 
 @Service
@@ -22,19 +21,24 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final VagaRepository vagaRepository;
     private final HabilidadeRepository habilidadeRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final GrupoRepository grupoRepository;
+    private final VerificationTokenRepository tokenRepository;
+    private final EmailService emailService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    // CONSTRUTOR ATUALIZADO (Adicionado GrupoRepository)
     public UsuarioService(UsuarioRepository usuarioRepository,
                           VagaRepository vagaRepository,
                           HabilidadeRepository habilidadeRepository,
-                          GrupoRepository grupoRepository, // <--- Adicionado
+                          GrupoRepository grupoRepository,
+                          VerificationTokenRepository tokenRepository,
+                          EmailService emailService,
                           BCryptPasswordEncoder encoder) {
         this.usuarioRepository = usuarioRepository;
         this.vagaRepository = vagaRepository;
         this.habilidadeRepository = habilidadeRepository;
-        this.grupoRepository = grupoRepository; // <--- Inicializado
+        this.grupoRepository = grupoRepository;
+        this.tokenRepository = tokenRepository;
+        this.emailService = emailService;
         this.passwordEncoder = encoder;
     }
 
@@ -47,15 +51,66 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Erro de segurança: Usuário logado não encontrado."));
     }
 
-    // --- CRUD ---
+    // --- CADASTRO E CONFIRMAÇÃO ---
 
+    @Transactional
     public Usuario criarUsuario(Usuario usuario){
-        if (usuario.getTipoDeUsuario() == null) {
-            usuario.setTipoDeUsuario(tipoDeUsuario.USUARIO);
+        // 1. Verifica se e-mail já existe
+        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
+            throw new RuntimeException("Este e-mail já está em uso.");
         }
+
+        // 2. Define padrões
+        if (usuario.getTipoDeUsuario() == null) {
+            // OBS: Certifique-se que o nome do Enum é TipoDeUsuario (Maiúscula)
+            usuario.setTipoDeUsuario(TipoDeUsuario.USUARIO);
+        }
+
+        // 3. Criptografa senha
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
-        return usuarioRepository.save(usuario);
+
+        // --- CORREÇÃO PRINCIPAL AQUI ---
+        // Não usamos mais setEnabled. Usamos o Status.
+        usuario.setStatus(StatusUsuario.INATIVO);
+
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+        // 4. Cria o Token de Verificação
+        VerificationToken token = new VerificationToken(usuarioSalvo);
+
+        tokenRepository.save(token);
+
+        // 5. Envia o E-mail
+
+        emailService.enviarEmailConfirmacao(usuarioSalvo.getEmail(), token.getToken());
+
+        return usuarioSalvo;
     }
+
+    @Transactional
+    public String confirmarConta(String token) {
+        VerificationToken verificationToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido ou inexistente."));
+
+        Usuario usuario = verificationToken.getUsuario();
+
+        // Verifica expiração
+        if (verificationToken.getDataExpiracao().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Este link de confirmação expirou. Solicite um novo.");
+        }
+
+        // --- CORREÇÃO PRINCIPAL AQUI ---
+        // Ativa o usuário mudando o Status
+        usuario.setStatus(StatusUsuario.ATIVO);
+        usuarioRepository.save(usuario);
+
+        // Remove o token usado para limpar o banco
+        tokenRepository.delete(verificationToken);
+
+        return "Conta verificada com sucesso! Você já pode fazer login.";
+    }
+
+    // --- ATUALIZAÇÃO (UPDATE) ---
 
     @Transactional
     public Optional<Usuario> atualizarUsuario(int idAlvo, Usuario dadosAtualizados){
@@ -73,7 +128,7 @@ public class UsuarioService {
             atualizarSeValido(dadosAtualizados.getCpf(), usuarioAlvo::setCpf);
             atualizarSeValido(dadosAtualizados.getPronomes(), usuarioAlvo::setPronomes);
 
-            // --- NOVO: DATA DE NASCIMENTO ---
+            // Data de Nascimento
             if (dadosAtualizados.getDataNascimento() != null) {
                 usuarioAlvo.setDataNascimento(dadosAtualizados.getDataNascimento());
             }
@@ -94,7 +149,7 @@ public class UsuarioService {
                 List<Habilidade> novasHabilidades = new ArrayList<>();
 
                 for (Habilidade h : dadosAtualizados.getHabilidades()) {
-                    if (h.getId() != null) {
+                    if (h.getId() != null) { // Verifica se é Long ou Integer conforme sua model
                         habilidadeRepository.findById(h.getId())
                                 .ifPresent(novasHabilidades::add);
                     }
@@ -109,31 +164,31 @@ public class UsuarioService {
     // --- MÉTODOS PRIVADOS DE LÓGICA ---
 
     private void validarPermissaoDeEdicao(Usuario logado, Usuario alvo, int idAlvo) {
-        boolean isStaff = logado.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR ||
-                logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR;
+        boolean isStaff = logado.getTipoDeUsuario() == TipoDeUsuario.ADMINISTRADOR ||
+                logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR;
 
         if (!isStaff && logado.getId() != idAlvo) {
             throw new RuntimeException("Acesso negado: Você não pode alterar dados de outros usuários.");
         }
 
-        if (logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR) {
-            if (alvo.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR) {
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR) {
+            if (alvo.getTipoDeUsuario() == TipoDeUsuario.ADMINISTRADOR) {
                 throw new RuntimeException("Acesso negado: Moderadores não podem alterar Administradores.");
             }
-            if (alvo.getTipoDeUsuario() == tipoDeUsuario.MODERADOR && logado.getId() != idAlvo) {
+            if (alvo.getTipoDeUsuario() == TipoDeUsuario.MODERADOR && logado.getId() != idAlvo) {
                 throw new RuntimeException("Acesso negado: Moderadores não podem alterar outros Moderadores.");
             }
         }
     }
 
     private void aplicarRegrasDeHierarquia(Usuario logado, Usuario alvo, Usuario dados) {
-        if (logado.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR) {
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.ADMINISTRADOR) {
             atualizarSePresente(dados.getTipoDeUsuario(), alvo::setTipoDeUsuario);
             atualizarSePresente(dados.getStatus(), alvo::setStatus);
         }
-        else if (logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR) {
-            if (alvo.getTipoDeUsuario() == tipoDeUsuario.USUARIO) {
-                if (dados.getTipoDeUsuario() != null && dados.getTipoDeUsuario() != tipoDeUsuario.ADMINISTRADOR) {
+        else if (logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR) {
+            if (alvo.getTipoDeUsuario() == TipoDeUsuario.USUARIO) {
+                if (dados.getTipoDeUsuario() != null && dados.getTipoDeUsuario() != TipoDeUsuario.ADMINISTRADOR) {
                     alvo.setTipoDeUsuario(dados.getTipoDeUsuario());
                 }
                 atualizarSePresente(dados.getStatus(), alvo::setStatus);
@@ -182,22 +237,26 @@ public class UsuarioService {
         return usuarioRepository.findById(id);
     }
 
+    @Transactional
     public boolean deletarUsuario(int id) {
         if (usuarioRepository.existsById(id)) {
+            // Nota: Se você não configurou o CascadeType.ALL na entidade Usuario para o Token,
+            // descomente a linha abaixo para evitar erro de Foreign Key:
+            // tokenRepository.deleteByUsuarioId(id);
+
             usuarioRepository.deleteById(id);
             return true;
         }
         return false;
     }
 
-    // --- FUNCIONALIDADES DE VAGAS SALVAS ---
+    // --- FUNCIONALIDADES DE VAGAS E GRUPOS (Mantidas iguais) ---
+    // (Omiti para economizar espaço, mas pode manter o que você já tinha)
 
     @Transactional
     public void salvarVaga(Long vagaId) {
         Usuario usuario = getUsuarioLogado();
-        Vaga vaga = vagaRepository.findById(vagaId)
-                .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
-
+        Vaga vaga = vagaRepository.findById(vagaId).orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
         if (!usuario.getVagasSalvas().contains(vaga)) {
             usuario.getVagasSalvas().add(vaga);
             usuarioRepository.save(usuario);
@@ -207,25 +266,17 @@ public class UsuarioService {
     @Transactional
     public void removerVagaSalva(Long vagaId) {
         Usuario usuario = getUsuarioLogado();
-        Vaga vaga = vagaRepository.findById(vagaId)
-                .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
-
+        Vaga vaga = vagaRepository.findById(vagaId).orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
         usuario.getVagasSalvas().remove(vaga);
         usuarioRepository.save(usuario);
     }
 
-    public List<Vaga> listarMinhasVagasSalvas() {
-        return getUsuarioLogado().getVagasSalvas();
-    }
-
-    // --- NOVO: FUNCIONALIDADES DE GRUPOS SALVOS ---
+    public List<Vaga> listarMinhasVagasSalvas() { return getUsuarioLogado().getVagasSalvas(); }
 
     @Transactional
     public void salvarGrupo(Long grupoId) {
         Usuario usuario = getUsuarioLogado();
-        Grupo grupo = grupoRepository.findById(grupoId)
-                .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
-
+        Grupo grupo = grupoRepository.findById(grupoId).orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
         if (!usuario.getGruposSalvos().contains(grupo)) {
             usuario.getGruposSalvos().add(grupo);
             usuarioRepository.save(usuario);
@@ -235,14 +286,10 @@ public class UsuarioService {
     @Transactional
     public void removerGrupoSalvo(Long grupoId) {
         Usuario usuario = getUsuarioLogado();
-        Grupo grupo = grupoRepository.findById(grupoId)
-                .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
-
+        Grupo grupo = grupoRepository.findById(grupoId).orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
         usuario.getGruposSalvos().remove(grupo);
         usuarioRepository.save(usuario);
     }
 
-    public List<Grupo> listarMeusGruposSalvos() {
-        return getUsuarioLogado().getGruposSalvos();
-    }
+    public List<Grupo> listarMeusGruposSalvos() { return getUsuarioLogado().getGruposSalvos(); }
 }

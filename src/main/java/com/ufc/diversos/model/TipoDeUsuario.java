@@ -1,6 +1,6 @@
 package com.ufc.diversos.model;
 
-public enum tipoDeUsuario {
+public enum TipoDeUsuario {
     USUARIO,
     ADMINISTRADOR,
     MODERADOR

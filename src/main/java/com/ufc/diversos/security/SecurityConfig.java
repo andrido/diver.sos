@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/habilidades/**").permitAll()
-
+                        .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll()
                         // --- 2. ROTAS DO USUÁRIO LOGADO (MEU PERFIL) ---
                         .requestMatchers("/usuarios/me/**").authenticated()
 

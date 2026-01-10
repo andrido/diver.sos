@@ -1,6 +1,6 @@
 package com.ufc.diversos.model;
 
-public enum statusUsuario {
+public enum StatusUsuario {
     ATIVO,
     INATIVO,
     BLOQUEADO,

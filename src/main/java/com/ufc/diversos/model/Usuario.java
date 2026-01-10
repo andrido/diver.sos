@@ -21,8 +21,10 @@ public class Usuario implements UserDetails {
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  private int id;
 
- private String nome;
+ // --- REMOVI O BOOLEAN ENABLED ---
+ // Você não precisa mais dele, o Enum vai controlar tudo.
 
+ private String nome;
  private String email;
 
  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -34,17 +36,16 @@ public class Usuario implements UserDetails {
  private LocalDate dataNascimento;
 
  private String cpf;
-
  private String pronomes;
 
  @Embedded
  private Endereco endereco;
 
  @Enumerated(EnumType.STRING)
- private statusUsuario status;
+ private StatusUsuario status; // Mudou para StatusUsuario (Maiúscula)
 
  @Enumerated(EnumType.STRING)
- private tipoDeUsuario tipoDeUsuario;
+ private TipoDeUsuario tipoDeUsuario; // Sugiro mudar TipoDeUsuario também
 
  @ManyToMany
  @JoinTable(
@@ -56,7 +57,7 @@ public class Usuario implements UserDetails {
 
  @ManyToMany(fetch = FetchType.LAZY)
  @JoinTable(
-         name = "usuarios_grupos_salvos", // Tabela nova no banco
+         name = "usuarios_grupos_salvos",
          joinColumns = @JoinColumn(name = "usuario_id"),
          inverseJoinColumns = @JoinColumn(name = "grupo_id")
  )
@@ -64,15 +65,15 @@ public class Usuario implements UserDetails {
 
  @ManyToMany(fetch = FetchType.EAGER)
  @JoinTable(
-         name = "usuarios_habilidades", // Nome da tabela de ligação
+         name = "usuarios_habilidades",
          joinColumns = @JoinColumn(name = "usuario_id"),
          inverseJoinColumns = @JoinColumn(name = "habilidade_id")
  )
  private List<Habilidade> habilidades;
 
 
+ // ---------- MÉTODOS DO USERDETAILS (A Mágica Acontece Aqui) ----------
 
- // ---------- MÉTODOS DO USERDETAILS ----------
  @Override
  public Collection<? extends GrantedAuthority> getAuthorities() {
   return List.of(() -> "ROLE_" + tipoDeUsuario.name());
@@ -85,15 +86,21 @@ public class Usuario implements UserDetails {
  @Override
  public String getUsername() { return email; }
 
+
+
+ @Override
+ public boolean isEnabled() {
+  return this.status == StatusUsuario.ATIVO;
+ }
+
+ @Override
+ public boolean isAccountNonLocked() {
+  return this.status != StatusUsuario.BLOQUEADO && this.status != StatusUsuario.SUSPENSO;
+ }
+
  @Override
  public boolean isAccountNonExpired() { return true; }
 
  @Override
- public boolean isAccountNonLocked() { return true; }
-
- @Override
  public boolean isCredentialsNonExpired() { return true; }
-
- @Override
- public boolean isEnabled() { return true; }
 }
