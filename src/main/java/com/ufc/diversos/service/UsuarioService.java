@@ -1,6 +1,7 @@
 package com.ufc.diversos.service;
 
 import com.ufc.diversos.model.*;
+import com.ufc.diversos.repository.GrupoRepository;
 import com.ufc.diversos.repository.HabilidadeRepository;
 import com.ufc.diversos.repository.UsuarioRepository;
 import com.ufc.diversos.repository.VagaRepository;
@@ -20,18 +21,23 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final VagaRepository vagaRepository;
-    private final HabilidadeRepository habilidadeRepository; // <--- 1. INJETAR O REPOSITÓRIO
+    private final HabilidadeRepository habilidadeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final GrupoRepository grupoRepository;
 
+    // CONSTRUTOR ATUALIZADO (Adicionado GrupoRepository)
     public UsuarioService(UsuarioRepository usuarioRepository,
                           VagaRepository vagaRepository,
-                          HabilidadeRepository habilidadeRepository, // <--- 2. ADICIONAR NO CONSTRUTOR
+                          HabilidadeRepository habilidadeRepository,
+                          GrupoRepository grupoRepository, // <--- Adicionado
                           BCryptPasswordEncoder encoder) {
         this.usuarioRepository = usuarioRepository;
         this.vagaRepository = vagaRepository;
         this.habilidadeRepository = habilidadeRepository;
+        this.grupoRepository = grupoRepository; // <--- Inicializado
         this.passwordEncoder = encoder;
     }
+
     // --- MÉTODOS DE SUPORTE (SEGURANÇA) ---
 
     public Usuario getUsuarioLogado() {
@@ -57,56 +63,59 @@ public class UsuarioService {
 
         return usuarioRepository.findById(idAlvo).map(usuarioAlvo -> {
 
-            // 1. Validação de Segurança (Quem pode editar quem?)
+            // 1. Validação de Segurança
             validarPermissaoDeEdicao(usuarioLogado, usuarioAlvo, idAlvo);
 
-            // 2. Atualização de Campos Básicos (Strings)
+            // 2. Atualização de Campos Básicos
             atualizarSeValido(dadosAtualizados.getNome(), usuarioAlvo::setNome);
             atualizarSeValido(dadosAtualizados.getEmail(), usuarioAlvo::setEmail);
             atualizarSeValido(dadosAtualizados.getTelefone(), usuarioAlvo::setTelefone);
             atualizarSeValido(dadosAtualizados.getCpf(), usuarioAlvo::setCpf);
             atualizarSeValido(dadosAtualizados.getPronomes(), usuarioAlvo::setPronomes);
 
+            // --- NOVO: DATA DE NASCIMENTO ---
+            if (dadosAtualizados.getDataNascimento() != null) {
+                usuarioAlvo.setDataNascimento(dadosAtualizados.getDataNascimento());
+            }
+
             // 3. Atualização de Senha
             if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isEmpty()) {
                 usuarioAlvo.setSenha(passwordEncoder.encode(dadosAtualizados.getSenha()));
             }
 
-            // 4. Atualização de Endereço (Lógica extraída)
+            // 4. Atualização de Endereço
             atualizarCamposEndereco(usuarioAlvo, dadosAtualizados.getEndereco());
 
-            // 5. Atualização de Cargos/Status (Regras complexas extraídas)
+            // 5. Atualização de Cargos/Status
             aplicarRegrasDeHierarquia(usuarioLogado, usuarioAlvo, dadosAtualizados);
 
-                    if (dadosAtualizados.getHabilidades() != null) {
-                        List<Habilidade> novasHabilidades = new ArrayList<>();
+            // 6. Atualização de Habilidades
+            if (dadosAtualizados.getHabilidades() != null) {
+                List<Habilidade> novasHabilidades = new ArrayList<>();
 
-                        for (Habilidade h : dadosAtualizados.getHabilidades()) {
-                            if (h.getId() != null) {
-                                habilidadeRepository.findById(h.getId())
-                                        .ifPresent(novasHabilidades::add);
-                            }
-                        }
-                        usuarioAlvo.setHabilidades(novasHabilidades);
-
+                for (Habilidade h : dadosAtualizados.getHabilidades()) {
+                    if (h.getId() != null) {
+                        habilidadeRepository.findById(h.getId())
+                                .ifPresent(novasHabilidades::add);
                     }
+                }
+                usuarioAlvo.setHabilidades(novasHabilidades);
+            }
 
             return usuarioRepository.save(usuarioAlvo);
         });
     }
 
-    // --- MÉTODOS PRIVADOS DE LÓGICA  ---
+    // --- MÉTODOS PRIVADOS DE LÓGICA ---
 
     private void validarPermissaoDeEdicao(Usuario logado, Usuario alvo, int idAlvo) {
         boolean isStaff = logado.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR ||
                 logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR;
 
-        // Regra: Usuário comum só mexe nele mesmo
         if (!isStaff && logado.getId() != idAlvo) {
             throw new RuntimeException("Acesso negado: Você não pode alterar dados de outros usuários.");
         }
 
-        // Regra: Moderador vs Admin/Moderador
         if (logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR) {
             if (alvo.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR) {
                 throw new RuntimeException("Acesso negado: Moderadores não podem alterar Administradores.");
@@ -118,15 +127,12 @@ public class UsuarioService {
     }
 
     private void aplicarRegrasDeHierarquia(Usuario logado, Usuario alvo, Usuario dados) {
-        // ADMIN: Pode tudo
         if (logado.getTipoDeUsuario() == tipoDeUsuario.ADMINISTRADOR) {
             atualizarSePresente(dados.getTipoDeUsuario(), alvo::setTipoDeUsuario);
             atualizarSePresente(dados.getStatus(), alvo::setStatus);
         }
-        // MODERADOR: Só altera status/tipo de usuários comuns
         else if (logado.getTipoDeUsuario() == tipoDeUsuario.MODERADOR) {
             if (alvo.getTipoDeUsuario() == tipoDeUsuario.USUARIO) {
-                // Impede promoção para ADMIN
                 if (dados.getTipoDeUsuario() != null && dados.getTipoDeUsuario() != tipoDeUsuario.ADMINISTRADOR) {
                     alvo.setTipoDeUsuario(dados.getTipoDeUsuario());
                 }
@@ -152,16 +158,14 @@ public class UsuarioService {
         }
     }
 
-    // --- MÉTODOS AUXILIARES GENÉRICOS (Clean Code) ---
+    // --- MÉTODOS AUXILIARES ---
 
-    // Para Strings: verifica null e vazio ("")
     private void atualizarSeValido(String valor, Consumer<String> setter) {
         if (valor != null && !valor.isBlank()) {
             setter.accept(valor);
         }
     }
 
-    // Para Objetos/Enums: verifica apenas null
     private <T> void atualizarSePresente(T valor, Consumer<T> setter) {
         if (valor != null) {
             setter.accept(valor);
@@ -212,5 +216,33 @@ public class UsuarioService {
 
     public List<Vaga> listarMinhasVagasSalvas() {
         return getUsuarioLogado().getVagasSalvas();
+    }
+
+    // --- NOVO: FUNCIONALIDADES DE GRUPOS SALVOS ---
+
+    @Transactional
+    public void salvarGrupo(Long grupoId) {
+        Usuario usuario = getUsuarioLogado();
+        Grupo grupo = grupoRepository.findById(grupoId)
+                .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
+
+        if (!usuario.getGruposSalvos().contains(grupo)) {
+            usuario.getGruposSalvos().add(grupo);
+            usuarioRepository.save(usuario);
+        }
+    }
+
+    @Transactional
+    public void removerGrupoSalvo(Long grupoId) {
+        Usuario usuario = getUsuarioLogado();
+        Grupo grupo = grupoRepository.findById(grupoId)
+                .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
+
+        usuario.getGruposSalvos().remove(grupo);
+        usuarioRepository.save(usuario);
+    }
+
+    public List<Grupo> listarMeusGruposSalvos() {
+        return getUsuarioLogado().getGruposSalvos();
     }
 }

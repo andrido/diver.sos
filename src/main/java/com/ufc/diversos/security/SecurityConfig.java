@@ -40,7 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // 1. AQUI ESTÁ A MÁGICA: Ativando o CORS no nível de segurança
+
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .csrf(csrf -> csrf.disable())
@@ -85,7 +85,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 2. CONFIGURAÇÃO DETALHADA DO CORS
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

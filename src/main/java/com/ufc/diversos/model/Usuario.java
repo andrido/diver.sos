@@ -1,5 +1,6 @@
 package com.ufc.diversos.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -7,6 +8,7 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,6 +29,9 @@ public class Usuario implements UserDetails {
  private String senha;
 
  private String telefone;
+
+ @JsonFormat(pattern = "yyyy-MM-dd")
+ private LocalDate dataNascimento;
 
  private String cpf;
 
@@ -49,6 +54,14 @@ public class Usuario implements UserDetails {
  )
  private List<Vaga> vagasSalvas;
 
+ @ManyToMany(fetch = FetchType.LAZY)
+ @JoinTable(
+         name = "usuarios_grupos_salvos", // Tabela nova no banco
+         joinColumns = @JoinColumn(name = "usuario_id"),
+         inverseJoinColumns = @JoinColumn(name = "grupo_id")
+ )
+ private List<Grupo> gruposSalvos;
+
  @ManyToMany(fetch = FetchType.EAGER)
  @JoinTable(
          name = "usuarios_habilidades", // Nome da tabela de ligação
@@ -56,6 +69,8 @@ public class Usuario implements UserDetails {
          inverseJoinColumns = @JoinColumn(name = "habilidade_id")
  )
  private List<Habilidade> habilidades;
+
+
 
  // ---------- MÉTODOS DO USERDETAILS ----------
  @Override

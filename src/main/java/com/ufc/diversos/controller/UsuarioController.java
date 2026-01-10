@@ -1,5 +1,6 @@
 package com.ufc.diversos.controller;
 
+import com.ufc.diversos.model.Grupo;
 import com.ufc.diversos.model.Usuario;
 import com.ufc.diversos.model.Vaga;
 import com.ufc.diversos.service.UsuarioService;
@@ -79,5 +80,24 @@ public class UsuarioController {
     public ResponseEntity<Void> removerVagaFavorita(@PathVariable Long vagaId) {
         usuarioService.removerVagaSalva(vagaId);
         return ResponseEntity.ok().build(); // Retorna 200 OK
+    }
+
+    // --- NOVOS ENDPOINTS: GRUPOS SALVOS ---
+
+    @PostMapping("/me/grupos/{grupoId}")
+    public ResponseEntity<Void> salvarGrupo(@PathVariable Long grupoId) {
+        usuarioService.salvarGrupo(grupoId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/me/grupos/{grupoId}")
+    public ResponseEntity<Void> removerGrupoSalvo(@PathVariable Long grupoId) {
+        usuarioService.removerGrupoSalvo(grupoId);
+        return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    @GetMapping("/me/grupos")
+    public ResponseEntity<List<Grupo>> listarMeusGrupos() {
+        return ResponseEntity.ok(usuarioService.listarMeusGruposSalvos());
     }
 }

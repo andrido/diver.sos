@@ -17,12 +17,22 @@ public class Grupo {
     private String nome;
 
     @NotBlank(message = "A descrição é obrigatória")
-    @Column(columnDefinition = "TEXT") // Permite textos longos
+    @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    @NotBlank(message = "O link do grupo  é obrigatório")
+    @NotBlank(message = "O link do grupo é obrigatório")
     private String link;
 
-    @NotBlank(message = "A categoria é obrigatória (Ex: TDAH, Estudos, Social)")
+    @NotBlank(message = "A categoria é obrigatória")
     private String categoria;
+
+    // --- NOVOS CAMPOS ---
+    @NotBlank(message = "A cidade é obrigatória")
+    private String cidade;
+
+    @NotBlank(message = "O estado é obrigatório")
+    private String estado;
+
+    @NotBlank(message = "O responsável (ou instituição) é obrigatório")
+    private String responsavel;
 }
