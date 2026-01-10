@@ -25,6 +25,7 @@ public class UsuarioService {
     private final VerificationTokenRepository tokenRepository;
     private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final ArquivoService arquivoService;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           VagaRepository vagaRepository,
@@ -32,7 +33,9 @@ public class UsuarioService {
                           GrupoRepository grupoRepository,
                           VerificationTokenRepository tokenRepository,
                           EmailService emailService,
-                          BCryptPasswordEncoder encoder) {
+                          BCryptPasswordEncoder encoder,
+                          ArquivoService arquivoService) {
+
         this.usuarioRepository = usuarioRepository;
         this.vagaRepository = vagaRepository;
         this.habilidadeRepository = habilidadeRepository;
@@ -40,6 +43,7 @@ public class UsuarioService {
         this.tokenRepository = tokenRepository;
         this.emailService = emailService;
         this.passwordEncoder = encoder;
+        this.arquivoService = new ArquivoService();
     }
 
     // --- MÉTODOS DE SUPORTE (SEGURANÇA) ---
@@ -111,6 +115,20 @@ public class UsuarioService {
     }
 
     // --- ATUALIZAÇÃO (UPDATE) ---
+
+    @Transactional
+    public Usuario atualizarFotoPerfil(Usuario usuario, org.springframework.web.multipart.MultipartFile arquivo) {
+
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new RuntimeException("O arquivo de imagem não pode ser vazio.");
+        }
+
+        String caminhoDaFoto = arquivoService.salvarArquivo(arquivo, "perfis");
+
+        usuario.setFotoPerfil(caminhoDaFoto);
+
+        return usuarioRepository.save(usuario);
+    }
 
     @Transactional
     public Optional<Usuario> atualizarUsuario(int idAlvo, Usuario dadosAtualizados){
@@ -214,6 +232,7 @@ public class UsuarioService {
     }
 
     // --- MÉTODOS AUXILIARES ---
+
 
     private void atualizarSeValido(String valor, Consumer<String> setter) {
         if (valor != null && !valor.isBlank()) {

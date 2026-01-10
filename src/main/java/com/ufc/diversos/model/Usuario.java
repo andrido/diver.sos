@@ -21,14 +21,15 @@ public class Usuario implements UserDetails {
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  private int id;
 
- // --- REMOVI O BOOLEAN ENABLED ---
- // Você não precisa mais dele, o Enum vai controlar tudo.
-
  private String nome;
+
  private String email;
 
  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
  private String senha;
+
+ @Column(name = "foto_perfil")
+ private String fotoPerfil;
 
  private String telefone;
 

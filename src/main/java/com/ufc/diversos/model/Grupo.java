@@ -23,6 +23,9 @@ public class Grupo {
     @NotBlank(message = "O link do grupo é obrigatório")
     private String link;
 
+    @Column(name = "banner_do_grupo")
+    private String bannerDoGrupo;
+
     @NotBlank(message = "A categoria é obrigatória")
     private String categoria;
 

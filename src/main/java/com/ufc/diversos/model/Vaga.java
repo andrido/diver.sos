@@ -27,6 +27,9 @@ public class Vaga {
     @Column(nullable = false, length = 1000)
     private String descricao;
 
+    @Column(name = "banner_da_vaga")
+    private String bannerDaVaga;
+
     @NotBlank(message = "Empresa é obrigatória")
     @Column(nullable = false)
     private String empresa;

@@ -60,6 +60,15 @@ public class UsuarioController {
     // --- ROTAS DO PERFIL PESSOAL (/me) ---
     // Essas rotas usam o token para identificar o usuário, sem precisar passar ID na URL
 
+    @PostMapping("/me/foto")
+    public ResponseEntity<Usuario> uploadFotoPerfil(@RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo) {
+        Usuario usuarioLogado = usuarioService.getUsuarioLogado();
+
+        Usuario usuarioAtualizado = usuarioService.atualizarFotoPerfil(usuarioLogado, arquivo);
+
+        return ResponseEntity.ok(usuarioAtualizado);
+    }
+
     @GetMapping("/me")
     public ResponseEntity<Usuario> meuPerfil() {
         return ResponseEntity.ok(usuarioService.getUsuarioLogado());

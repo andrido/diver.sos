@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // --- 1. ROTAS TOTALMENTE PÚBLICAS ---
+                        .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
