@@ -40,22 +40,22 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // --- 1. ROTAS TOTALMENTE PÚBLICAS (Visitante) ---
+                        // --- 1. ROTAS TOTALMENTE PÚBLICAS ---
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
-
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/habilidades/**").permitAll()
 
-                        // --- 2. REGRAS DE ADMIN / MODERADOR (Escrita Sensível) ---
+                        // --- 2. ROTAS DO USUÁRIO LOGADO (MEU PERFIL) ---
+                        .requestMatchers("/usuarios/me/**").authenticated()
+
+                        // --- 3. REGRAS DE ADMIN / MODERADOR ---
 
                         // Vagas
                         .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
@@ -65,19 +65,21 @@ public class SecurityConfig {
                         // Notícias
                         .requestMatchers("/noticias/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Grupos (Edição/Criação/Deleção restritas)
+                        // Grupos
                         .requestMatchers(HttpMethod.POST, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.PUT, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Habilidades (Criar novas techs)
+                        // Habilidades
                         .requestMatchers(HttpMethod.POST, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Gestão de Usuários
+                        // Gestão de Usuários (Genérico)
+                        // Como a rota /usuarios/me já foi tratada lá em cima, o que sobrar aqui (ex: /usuarios/5)
+                        // cai nesta regra de Admin.
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // --- 3. BLOQUEIO PADRÃO ---
+                        // --- 4. BLOQUEIO PADRÃO ---
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -85,21 +87,12 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Permite o seu Frontend (Vite)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000")); // Adicionei a porta 3000 por garantia
-
-        // Permite os métodos HTTP necessários
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-
-        // Permite Headers (Authorization é essencial pro Token JWT passar)
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-
-        // Permite credenciais
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
