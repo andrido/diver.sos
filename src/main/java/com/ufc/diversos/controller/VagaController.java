@@ -65,4 +65,14 @@ public class VagaController {
         return vagaService.buscarComFiltros(termo, modalidade, tipo, cidade);
     }
 
+    @PostMapping("/{id}/foto")
+    public ResponseEntity<Vaga> uploadBanner(@PathVariable Long id,
+                                             @RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo) {
+
+
+        Vaga vagaAtualizada = vagaService.atualizarBannerVaga(id, arquivo);
+
+        return ResponseEntity.ok(vagaAtualizada);
+    }
+
 }

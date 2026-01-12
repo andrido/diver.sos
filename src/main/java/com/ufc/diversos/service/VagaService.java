@@ -9,6 +9,8 @@ import com.ufc.diversos.model.Vaga.ModalidadeVaga;
 import com.ufc.diversos.repository.VagaRepository;
 import org.springframework.stereotype.Service;
 import com.ufc.diversos.repository.HabilidadeRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +20,12 @@ import java.util.Optional;
 public class VagaService {
 
     private final VagaRepository vagaRepository;
-    ;
+    private final ArquivoService arquivoService;
     private final HabilidadeRepository habilidadeRepository;
 
-    public VagaService(VagaRepository vagaRepository, HabilidadeRepository habilidadeRepository) {
+    public VagaService(VagaRepository vagaRepository, HabilidadeRepository habilidadeRepository, ArquivoService arquivoService) {
         this.vagaRepository = vagaRepository;
+        this.arquivoService = new ArquivoService();
         this.habilidadeRepository = habilidadeRepository;
     }
     public List<Vaga> listarTodas() {
@@ -39,7 +42,19 @@ public class VagaService {
     }
 
 
+    @Transactional
+    public Vaga atualizarBannerVaga(Long id, org.springframework.web.multipart.MultipartFile arquivo) {
+        Vaga vaga = vagaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
 
+        // 1. Salva na pasta "uploads/vagas"
+        String caminhoBanner = arquivoService.salvarArquivo(arquivo, "vagas");
+
+        // 2. Atualiza o banco
+        vaga.setLinkDaVaga(caminhoBanner); // Certifique-se que o campo na Model chama 'fotoBanner'
+
+        return vagaRepository.save(vaga);
+    }
     public Vaga criar(Vaga vaga) {
 
         vaga.setDataCriacao(LocalDateTime.now());

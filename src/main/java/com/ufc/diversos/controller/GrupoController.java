@@ -45,4 +45,13 @@ public class GrupoController {
                 ResponseEntity.noContent().build() :
                 ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/{id}/foto")
+    public ResponseEntity<Grupo> uploadFoto(@PathVariable Long id,
+                                            @RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo) {
+
+        Grupo grupoAtualizado = grupoService.atualizarFotoGrupo(id, arquivo);
+
+        return ResponseEntity.ok(grupoAtualizado);
+    }
 }
