@@ -15,7 +15,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     // Pega o email do remetente direto do application.yml para não hardcoded
-    @Value("${spring.mail.username}")
+    @Value("${app.mail.from}")
     private String remetente;
 
     public EmailService(JavaMailSender mailSender) {

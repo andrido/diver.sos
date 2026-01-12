@@ -66,31 +66,27 @@ public class UsuarioService {
 
         // 2. Define padrões
         if (usuario.getTipoDeUsuario() == null) {
-            // OBS: Certifique-se que o nome do Enum é TipoDeUsuario (Maiúscula)
             usuario.setTipoDeUsuario(TipoDeUsuario.USUARIO);
         }
 
         // 3. Criptografa senha
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
 
-        // --- CORREÇÃO PRINCIPAL AQUI ---
-        // Não usamos mais setEnabled. Usamos o Status.
+        // Define status INATIVO até confirmar e-mail
         usuario.setStatus(StatusUsuario.INATIVO);
 
+        // 4. Salva no Banco (Rápido)
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-        // 4. Cria o Token de Verificação
+        // 5. Cria o Token
         VerificationToken token = new VerificationToken(usuarioSalvo);
-
         tokenRepository.save(token);
 
-        // 5. Envia o E-mail
 
         emailService.enviarEmailConfirmacao(usuarioSalvo.getEmail(), token.getToken());
 
         return usuarioSalvo;
     }
-
     @Transactional
     public String confirmarConta(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token)
