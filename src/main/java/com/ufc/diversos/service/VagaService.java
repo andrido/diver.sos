@@ -6,6 +6,7 @@ import com.ufc.diversos.model.Vaga;
 import com.ufc.diversos.model.Vaga.StatusVaga;
 import com.ufc.diversos.model.Vaga.TipoVaga;
 import com.ufc.diversos.model.Vaga.ModalidadeVaga;
+import com.ufc.diversos.repository.UsuarioRepository;
 import com.ufc.diversos.repository.VagaRepository;
 import org.springframework.stereotype.Service;
 import com.ufc.diversos.repository.HabilidadeRepository;
@@ -22,11 +23,16 @@ public class VagaService {
     private final VagaRepository vagaRepository;
     private final ArquivoService arquivoService;
     private final HabilidadeRepository habilidadeRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public VagaService(VagaRepository vagaRepository, HabilidadeRepository habilidadeRepository, ArquivoService arquivoService) {
+    public VagaService(VagaRepository vagaRepository,
+                       HabilidadeRepository habilidadeRepository,
+                       ArquivoService arquivoService,
+                       UsuarioRepository usuarioRepository) {
         this.vagaRepository = vagaRepository;
-        this.arquivoService = new ArquivoService();
+        this.arquivoService = arquivoService;
         this.habilidadeRepository = habilidadeRepository;
+        this.usuarioRepository = usuarioRepository;
     }
     public List<Vaga> listarTodas() {
         return vagaRepository.findByStatus(StatusVaga.ATIVA);
@@ -51,7 +57,7 @@ public class VagaService {
         String caminhoBanner = arquivoService.salvarArquivo(arquivo, "vagas");
 
         // 2. Atualiza o banco
-        vaga.setLinkDaVaga(caminhoBanner); // Certifique-se que o campo na Model chama 'fotoBanner'
+        vaga.setLinkDaVaga(caminhoBanner);
 
         return vagaRepository.save(vaga);
     }
@@ -105,9 +111,15 @@ public class VagaService {
         });
     }
     public boolean deletar(Long id) {
-        if (!vagaRepository.existsById(id)) return false;
-        vagaRepository.deleteById(id);
-        return true;
+        if (vagaRepository.existsById(id)) {
+            // 1. Limpa quem favoritou essa vaga
+            usuarioRepository.removerVagaDosFavoritos(id);
+
+            // 2. Agora deleta a vaga sem erro
+            vagaRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     private void atualizarSeValido(String valor, java.util.function.Consumer<String> setter) {

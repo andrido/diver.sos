@@ -37,7 +37,11 @@ public class GrupoController {
     public ResponseEntity<Grupo> criar(@Valid @RequestBody Grupo grupo) {
         return ResponseEntity.ok(grupoService.salvar(grupo));
     }
-
+    @PutMapping("/{id}")
+    public ResponseEntity<Grupo> atualizarGrupo(@PathVariable Long id, @RequestBody Grupo grupoAtualizado) {
+        Grupo grupo = grupoService.atualizar(id, grupoAtualizado);
+        return ResponseEntity.ok(grupo);
+    }
     // Deletar (Restrito a Admin/Mod)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
@@ -45,6 +49,7 @@ public class GrupoController {
                 ResponseEntity.noContent().build() :
                 ResponseEntity.notFound().build();
     }
+
 
     @PostMapping("/{id}/foto")
     public ResponseEntity<Grupo> uploadFoto(@PathVariable Long id,
