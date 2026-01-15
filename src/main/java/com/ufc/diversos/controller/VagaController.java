@@ -23,10 +23,16 @@ public class VagaController {
         this.vagaService = vagaService;
     }
 
-    @GetMapping
-    public List<Vaga> getAll() {
-        return vagaService.listarTodas();
+    @GetMapping("/ativas")
+    public List<Vaga> getAllActive() {
+        return vagaService.listarVagasAtivas();
     }
+
+    @GetMapping
+    public List <Vaga> getAll(){
+        return vagaService.listarTodasAsVagas();
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Vaga> getById(@PathVariable Long id) {

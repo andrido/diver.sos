@@ -34,9 +34,14 @@ public class VagaService {
         this.habilidadeRepository = habilidadeRepository;
         this.usuarioRepository = usuarioRepository;
     }
-    public List<Vaga> listarTodas() {
+    public List<Vaga> listarVagasAtivas() {
         return vagaRepository.findByStatus(StatusVaga.ATIVA);
     }
+
+    public List<Vaga> listarTodasAsVagas(){
+        return vagaRepository.findAll();
+    }
+
 
 
     public List<Vaga> buscarComFiltros(String termo, ModalidadeVaga modalidade, TipoVaga tipo, String cidade) {
