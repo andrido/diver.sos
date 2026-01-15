@@ -38,27 +38,34 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
+                // Ativa o CORS com a configuração definida no método abaixo
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Desativa CSRF (padrão para APIs Stateless/JWT)
                 .csrf(csrf -> csrf.disable())
+                // Define que não haverá sessão no servidor (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Regras de acesso (Quem pode acessar o quê)
                 .authorizeHttpRequests(auth -> auth
 
-                        // --- 1. ROTAS TOTALMENTE PÚBLICAS ---
-                        .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
+                        // --- 1. ROTAS PÚBLICAS (Qualquer um acessa) ---
+                        .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll() // Fotos de perfil/banners
+                        .requestMatchers("/auth/login").permitAll()                 // Login
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()  // Cadastro (Registro)
+                        .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll() // Confirmação de E-mail
+                        .requestMatchers("/error").permitAll()
+                        // Leitura de dados públicos
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/habilidades/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll()
-                        // --- 2. ROTAS DO USUÁRIO LOGADO (MEU PERFIL) ---
+                        .requestMatchers(HttpMethod.GET, "/grupos/**").permitAll() // Caso queira listar grupos publicamente
+
+                        // --- 2. ROTAS DO USUÁRIO LOGADO (Qualquer perfil) ---
                         .requestMatchers("/usuarios/me/**").authenticated()
 
-                        // --- 3. REGRAS DE ADMIN / MODERADOR ---
+                        // --- 3. REGRAS DE ADMIN / MODERADOR (Escrita/Deleção) ---
 
-                        // Vagas
+                        // Vagas (Criar, Editar, Deletar)
                         .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.PUT, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
@@ -66,23 +73,23 @@ public class SecurityConfig {
                         // Notícias
                         .requestMatchers("/noticias/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Grupos
+                        // Grupos (Criar, Editar, Deletar)
                         .requestMatchers(HttpMethod.POST, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.PUT, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
                         // Habilidades
                         .requestMatchers(HttpMethod.POST, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Gestão de Usuários (Genérico)
-                        // Como a rota /usuarios/me já foi tratada lá em cima, o que sobrar aqui (ex: /usuarios/5)
-                        // cai nesta regra de Admin.
+                        // Gestão de Usuários (Ex: Listar todos, banir alguém pelo ID)
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
                         .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // --- 4. BLOQUEIO PADRÃO ---
+                        // --- 4. BLOQUEIO PADRÃO (Tudo que não foi listado acima exige login) ---
                         .anyRequest().authenticated()
                 )
+                // Adiciona o nosso filtro de Token antes do filtro padrão do Spring
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -91,10 +98,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
+
+        // --- CONFIGURAÇÃO DE ORIGENS (Onde o Front mora) ---
+        // Usamos addAllowedOriginPattern para aceitar subdomínios e evitar erro de barra no final
+
+        configuration.addAllowedOriginPattern("http://localhost:*");        // Aceita 3000, 5173, etc.
+        configuration.addAllowedOriginPattern("https://*.onrender.com");    // Aceita seu front no Render
+        configuration.addAllowedOriginPattern("https://*.railway.app");     // Segurança extra
+
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowCredentials(true); // Permite cookies/credentials se necessário
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
