@@ -35,7 +35,7 @@ INSERT INTO habilidades (id, nome) VALUES
 -- 3. USUARIOS DO SISTEMA
 ---------------------------------------------------------
 
--- ADMINISTRADOR PADRÃO (Com seu Hash de Senha)
+-- ADMINISTRADOR PADRÃO - Senha: Admin@123
 INSERT INTO usuarios (
     id, nome, email, senha, foto_perfil, telefone,
     data_nascimento, cpf, pronomes, status, tipo_de_usuario,
@@ -49,28 +49,28 @@ INSERT INTO usuarios (
              'Sede', 'Ceara', '100', 'Rua Central'
          );
 
--- MODERADOR (SOBRAL)
+-- MODERADOR (ZECA) Senha: Mod@1234
 INSERT INTO usuarios (
     id, nome, email, senha, foto_perfil, telefone,
     data_nascimento, cpf, pronomes, status, tipo_de_usuario,
     bairro, cep, cidade, complemento, estado, numero, rua
 ) VALUES (
              2, 'Zeca da Silva', 'moderador@diversos.com',
-             '$2a$10$vI0pZ.m7J5M.mJbEpxSByuPeyqGIsGInRshQ6Gat6tF.X8D7CUE96',
+             '$2a$10$3B3KNUhq54Od2HkTCa.pJu/FHU.yjs77IDzu3v48B9jwR6nUMyNSO',
              'https://i.pravatar.cc/150?u=mod', '88988887777',
              '1985-10-20', '44455566677', 'Ele/Dele', 'ATIVO',
              'MODERADOR', 'Derby', '62042030', 'Sobral',
              'Ap 302', 'Ceara', '1200', 'Rua Viriato de Medeiros'
          );
 
--- USUÁRIA COMUM (FERNANDA)
+-- USUÁRIA COMUM (FERNANDA) Senha: Senha@123
 INSERT INTO usuarios (
     id, nome, email, senha, foto_perfil, telefone,
     data_nascimento, cpf, pronomes, status, tipo_de_usuario,
     bairro, cep, cidade, complemento, estado, numero, rua
 ) VALUES (
              3, 'Fernanda Oliveira', 'usuario@diversos.com',
-             '$2a$10$vI0pZ.m7J5M.mJbEpxSByuPeyqGIsGInRshQ6Gat6tF.X8D7CUE96',
+             '$2a$10$kbjDhMhALLMcb4K/nozCeeFoYSxLrY4hHRxNpn2q.fsSzk2lfN/Lq',
              'https://i.pravatar.cc/150?u=fernanda', '85977776666',
              '1998-03-12', '22233344455', 'Ela/Dela', 'ATIVO',
              'USUARIO', 'Aldeota', '60115000', 'Fortaleza',
@@ -80,10 +80,11 @@ INSERT INTO usuarios (
 ---------------------------------------------------------
 -- 4. NOTICIAS (conteudo, data_publicacao, titulo, autor_id)
 ---------------------------------------------------------
-INSERT INTO noticia (conteudo, data_publicacao, titulo, autor_id) VALUES
-                                                                      ('Abertura de novas vagas afirmativas para o setor de tecnologia.', NOW(), 'Oportunidades Tech', 1),
-                                                                      ('Dicas exclusivas para mandar bem na sua primeira entrevista remota.', NOW(), 'Guia de Carreira', 2),
-                                                                      ('Conheça os novos grupos de apoio criados para a comunidade local.', NOW(), 'Rede de Apoio', 1);
+INSERT INTO noticia (conteudo, data_publicacao, titulo, autor_id)
+VALUES
+      ('Abertura de novas vagas afirmativas para o setor de tecnologia.', NOW(), 'Oportunidades Tech', 1),
+      ('Dicas exclusivas para mandar bem na sua primeira entrevista remota.', NOW(), 'Guia de Carreira', 2),
+      ('Conheça os novos grupos de apoio criados para a comunidade local.', NOW(), 'Rede de Apoio', 1);
 
 ---------------------------------------------------------
 -- 5. GRUPOS DE APOIO E ESTUDO
