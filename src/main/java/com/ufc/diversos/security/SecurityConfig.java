@@ -56,6 +56,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll()
+                        .requestMatchers("/auth/esqueci-senha").permitAll()
+                        .requestMatchers("/auth/nova-senha").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // Leitura pública (Qualquer um, inclusive RH, pode VER notícias e grupos, mas não editar)
