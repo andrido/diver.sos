@@ -245,28 +245,56 @@ public class UsuarioService {
     // --- MÉTODOS DE LEITURA E DELEÇÃO ---
 
     public List<Usuario> listarUsuarios() {
+        Usuario logado = getUsuarioLogado();
+
+        // Se for MODERADOR, ele só vê quem é USUARIO ou RH
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR) {
+            return usuarioRepository.findByTipoDeUsuarioIn(
+                    List.of(TipoDeUsuario.USUARIO, TipoDeUsuario.RH)
+            );
+        }
+
+
         return usuarioRepository.findAll();
     }
 
     public Optional<Usuario> buscarPorId(int id) {
-        return usuarioRepository.findById(id);
+        Usuario logado = getUsuarioLogado();
+        Optional<Usuario> alvoOpt = usuarioRepository.findById(id);
+
+
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR && alvoOpt.isPresent()) {
+            Usuario alvo = alvoOpt.get();
+            if (alvo.getTipoDeUsuario() == TipoDeUsuario.ADMINISTRADOR) {
+                throw new RuntimeException("Acesso negado: Moderadores não podem visualizar Administradores.");
+            }
+        }
+
+        return alvoOpt;
     }
 
     @Transactional
     public boolean deletarUsuario(int id) {
-        if (usuarioRepository.existsById(id)) {
-            // Nota: Se você não configurou o CascadeType.ALL na entidade Usuario para o Token,
-            // descomente a linha abaixo para evitar erro de Foreign Key:
-            // tokenRepository.deleteByUsuarioId(id);
+        Usuario logado = getUsuarioLogado();
+        Usuario alvo = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
-            usuarioRepository.deleteById(id);
-            return true;
+
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.MODERADOR) {
+            if (alvo.getTipoDeUsuario() == TipoDeUsuario.ADMINISTRADOR ||
+                    alvo.getTipoDeUsuario() == TipoDeUsuario.MODERADOR) {
+                throw new RuntimeException("Acesso negado: Você não pode desativar este perfil.");
+            }
         }
-        return false;
+
+        alvo.setStatus(StatusUsuario.INATIVO);
+        usuarioRepository.save(alvo);
+
+        return true;
     }
 
-    // --- FUNCIONALIDADES DE VAGAS E GRUPOS (Mantidas iguais) ---
-    // (Omiti para economizar espaço, mas pode manter o que você já tinha)
+    // --- FUNCIONALIDADES DE VAGAS E GRUPOS
+
 
     @Transactional
     public void salvarVaga(Long vagaId) {
