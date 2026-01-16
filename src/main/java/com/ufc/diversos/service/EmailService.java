@@ -30,7 +30,7 @@ public class EmailService {
         logger.info("📧 Iniciando envio de e-mail local para: {}", emailDestino);
 
         try {
-            String link = "https://localhost:5173/auth/confirmar?token=" + token;
+            String link = "http://localhost:5173/auth/confirmar?token=" + token;
             String texto = """
                 Olá!
                 
@@ -63,7 +63,7 @@ public class EmailService {
         try {
             // AQUI ESTÁ O SEGREDO: O link leva para o FRONT do Davi
             // Quando o usuário clicar, ele abre a página do Davi que já tem o formulário
-            String linkReset = "http://localhost:5173/resetar-senha?token=" + token;
+            String linkReset = "http://localhost:5173/nova-senha?token=" + token;
 
             String texto = """
             Olá!
