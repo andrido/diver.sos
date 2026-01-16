@@ -4,6 +4,7 @@ import com.ufc.diversos.model.Noticia;
 import com.ufc.diversos.service.NoticiaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -46,5 +47,10 @@ public class NoticiaController {
         return noticiaService.deletar(id) ?
                 ResponseEntity.ok().build() :
                 ResponseEntity.notFound().build();
+    }
+    @PostMapping("/{id}/foto")
+    public ResponseEntity<String> subirImagem(@PathVariable Long id, @RequestParam("foto") MultipartFile arquivo) {
+        noticiaService.atualizarImagemNoticia(id, arquivo);
+        return ResponseEntity.ok("Imagem da notícia enviada!");
     }
 }

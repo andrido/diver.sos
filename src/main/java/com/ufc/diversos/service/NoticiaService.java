@@ -3,6 +3,7 @@ package com.ufc.diversos.service;
 import com.ufc.diversos.model.Noticia;
 import com.ufc.diversos.repository.NoticiaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,10 +14,28 @@ public class NoticiaService {
 
     private final NoticiaRepository noticiaRepository;
     private final UsuarioService usuarioService; // Necessário para setar o Autor
+    private final ArquivoService arquivoService;
 
-    public NoticiaService(NoticiaRepository noticiaRepository, UsuarioService usuarioService) {
+    public NoticiaService(NoticiaRepository noticiaRepository, UsuarioService usuarioService, ArquivoService arquivoService) {
         this.noticiaRepository = noticiaRepository;
         this.usuarioService = usuarioService;
+        this.arquivoService = arquivoService;
+    }
+
+    @Transactional
+    public Noticia atualizarImagemNoticia(Long id, org.springframework.web.multipart.MultipartFile arquivo) {
+        Noticia noticia = noticiaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notícia não encontrada"));
+
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new RuntimeException("O arquivo de imagem não pode estar vazio.");
+        }
+
+        String caminhoDaImagem = arquivoService.salvarArquivo(arquivo, "noticias");
+
+        noticia.setImagemUrl(caminhoDaImagem);
+
+        return noticiaRepository.save(noticia);
     }
 
     public List<Noticia> listarTodas() {
