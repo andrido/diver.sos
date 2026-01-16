@@ -84,6 +84,7 @@ public class VagaService {
     @Transactional
     public Vaga criarVaga(Vaga vaga) {
         Usuario logado = usuarioService.getUsuarioLogado();
+        vaga.setDataCriacao(LocalDateTime.now());
 
         vaga.setCriador(logado);
         // RH cadastra vaga INATIVA por padrão
