@@ -178,27 +178,22 @@ public class UsuarioService {
     // --- REDEFINIR SENHA DE USUARIO  --- //
 
     @Transactional
-    public void solicitarRecuperacaoSenha(String emailRaw) {
+    public void solicitarRecuperacaoSenha(String email) {
 
-        String email = emailRaw.replace("\"", "").trim().toLowerCase();
+        String emailTratado = email.trim().toLowerCase();
 
-
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("E-mail [" + email + "] não encontrado no sistema."));
-
+        Usuario usuario = usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new RuntimeException("E-mail [" + emailTratado + "] não encontrado no sistema."));
 
         String token = UUID.randomUUID().toString();
-
 
         VerificationToken resetToken = new VerificationToken(usuario);
         resetToken.setToken(token);
         resetToken.setDataExpiracao(LocalDateTime.now().plusHours(1));
         tokenRepository.save(resetToken);
 
-
         emailService.enviarEmailRecuperacao(usuario.getEmail(), token);
     }
-
     @Transactional
     public void redefinirSenhaEsquecida(String token, ResetSenhaRequestDTO dto) {
         VerificationToken vToken = tokenRepository.findByToken(token)
