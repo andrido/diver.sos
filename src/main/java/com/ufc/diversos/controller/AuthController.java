@@ -2,6 +2,7 @@ package com.ufc.diversos.controller;
 
 import com.ufc.diversos.dto.LoginDTO;
 import com.ufc.diversos.dto.LoginResponseDTO;
+import com.ufc.diversos.dto.ResetSenhaRequestDTO;
 import com.ufc.diversos.model.StatusUsuario; // Importe o Enum
 import com.ufc.diversos.model.Usuario;
 import com.ufc.diversos.repository.UsuarioRepository;
@@ -40,6 +41,21 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    // --- ROTA DE RECUPERAÇÃO DE SENHA ---
+    @PostMapping("/esqueci-senha")
+    public ResponseEntity<String> solicitarMudancaDeSenha(@RequestBody String email) {
+        String emailLimpo = email.replace("\"", "").trim();
+        usuarioService.solicitarRecuperacaoSenha(emailLimpo);
+        return ResponseEntity.ok("E-mail de recuperação enviado!");
+    }
+
+    @PostMapping("/nova-senha")
+    public ResponseEntity<String> definirNovaSenha (@RequestParam String token, @RequestBody ResetSenhaRequestDTO dto) {
+
+        usuarioService.redefinirSenhaEsquecida(token, dto);
+
+        return ResponseEntity.ok("Senha redefinida com sucesso!");
     }
 
     @PostMapping("/login")

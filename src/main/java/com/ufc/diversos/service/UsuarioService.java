@@ -1,5 +1,6 @@
 package com.ufc.diversos.service;
 
+import com.ufc.diversos.dto.ResetSenhaRequestDTO;
 import com.ufc.diversos.model.*;
 import com.ufc.diversos.repository.*;
 import org.springframework.security.core.Authentication;
@@ -94,13 +95,11 @@ public class UsuarioService {
 
         Usuario usuario = verificationToken.getUsuario();
 
-        // Verifica expiração
+
         if (verificationToken.getDataExpiracao().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Este link de confirmação expirou. Solicite um novo.");
         }
 
-        // --- CORREÇÃO PRINCIPAL AQUI ---
-        // Ativa o usuário mudando o Status
         usuario.setStatus(StatusUsuario.ATIVO);
         usuarioRepository.save(usuario);
 
@@ -125,6 +124,7 @@ public class UsuarioService {
 
         return usuarioRepository.save(usuario);
     }
+
 
     @Transactional
     public Optional<Usuario> atualizarUsuario(int idAlvo, Usuario dadosAtualizados){
@@ -175,6 +175,45 @@ public class UsuarioService {
         });
     }
 
+    // --- REDEFINIR SENHA DE USUARIO  --- //
+
+    @Transactional
+    public void solicitarRecuperacaoSenha(String email) {
+        // 1. Busca o usuário pelo e-mail
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("E-mail não encontrado no sistema."));
+
+        // 2. Gera um token aleatório único
+        String token = UUID.randomUUID().toString();
+
+        // 3. Salva o token no banco (Reutilizando sua lógica de VerificationToken)
+        VerificationToken resetToken = new VerificationToken(usuario);
+        resetToken.setToken(token);
+
+        // Define expiração (ex: 1 hora a partir de agora)
+        resetToken.setDataExpiracao(LocalDateTime.now().plusHours(1));
+
+        tokenRepository.save(resetToken);
+
+        // 4. CHAMA O EMAILSERVICE (É aqui que o método que você criou no EmailService é executado)
+        emailService.enviarEmailRecuperacao(usuario.getEmail(), token);
+    }
+    @Transactional
+    public void redefinirSenhaEsquecida(String token, ResetSenhaRequestDTO dto) {
+        VerificationToken vToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
+
+        if (!dto.getNovaSenha().equals(dto.getNovaSenhaRepeticao())) {
+            throw new RuntimeException("As senhas não coincidem.");
+        }
+
+        Usuario usuario = vToken.getUsuario();
+        usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+
+        usuarioRepository.save(usuario);
+
+        tokenRepository.delete(vToken);
+    }
     // --- MÉTODOS PRIVADOS DE LÓGICA ---
 
     private void validarPermissaoDeEdicao(Usuario logado, Usuario alvo, int idAlvo) {
