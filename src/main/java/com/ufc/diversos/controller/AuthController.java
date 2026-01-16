@@ -1,5 +1,6 @@
 package com.ufc.diversos.controller;
 
+import com.ufc.diversos.dto.EmailRequestDTO;
 import com.ufc.diversos.dto.LoginDTO;
 import com.ufc.diversos.dto.LoginResponseDTO;
 import com.ufc.diversos.dto.ResetSenhaRequestDTO;
@@ -44,9 +45,9 @@ public class AuthController {
     }
     // --- ROTA DE RECUPERAÇÃO DE SENHA ---
     @PostMapping("/esqueci-senha")
-    public ResponseEntity<String> solicitarMudancaDeSenha(@RequestBody String email) {
-
-        usuarioService.solicitarRecuperacaoSenha(email);
+    public ResponseEntity<String> solicitarMudancaDeSenha(@RequestBody EmailRequestDTO dto) {
+        // Agora o dto.getEmail() terá apenas "usuario@diversos.com"
+        usuarioService.solicitarRecuperacaoSenha(dto.getEmail());
         return ResponseEntity.ok("E-mail de recuperação enviado!");
     }
     @PostMapping("/nova-senha")
