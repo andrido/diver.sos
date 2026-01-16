@@ -1,6 +1,8 @@
 package com.ufc.diversos.service;
 
 import com.ufc.diversos.model.Habilidade;
+import com.ufc.diversos.model.TipoDeUsuario;
+import com.ufc.diversos.model.Usuario;
 import com.ufc.diversos.model.Vaga;
 // Importando os Enums para não precisar escrever Vaga.StatusVaga toda hora no código
 import com.ufc.diversos.model.Vaga.StatusVaga;
@@ -24,15 +26,18 @@ public class VagaService {
     private final ArquivoService arquivoService;
     private final HabilidadeRepository habilidadeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     public VagaService(VagaRepository vagaRepository,
                        HabilidadeRepository habilidadeRepository,
                        ArquivoService arquivoService,
-                       UsuarioRepository usuarioRepository) {
+                       UsuarioRepository usuarioRepository,
+                       UsuarioService usuarioService) {
         this.vagaRepository = vagaRepository;
         this.arquivoService = arquivoService;
         this.habilidadeRepository = habilidadeRepository;
         this.usuarioRepository = usuarioRepository;
+        this.usuarioService = usuarioService;
     }
     public List<Vaga> listarVagasAtivas() {
         return vagaRepository.findByStatus(StatusVaga.ATIVA);
@@ -42,6 +47,17 @@ public class VagaService {
         return vagaRepository.findAll();
     }
 
+    public List<Vaga> listarVagasParaDashboard() {
+        Usuario logado = usuarioService.getUsuarioLogado();
+
+
+        if (logado.getTipoDeUsuario() == com.ufc.diversos.model.TipoDeUsuario.RH) {
+            return vagaRepository.findByCriadorId(logado.getId());
+        }
+
+
+        return vagaRepository.findAll();
+    }
 
 
     public List<Vaga> buscarComFiltros(String termo, ModalidadeVaga modalidade, TipoVaga tipo, String cidade) {
@@ -58,26 +74,25 @@ public class VagaService {
         Vaga vaga = vagaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
 
-        // 1. Salva na pasta "uploads/vagas"
         String caminhoBanner = arquivoService.salvarArquivo(arquivo, "vagas");
 
-        // 2. Atualiza o banco
-        vaga.setLinkDaVaga(caminhoBanner);
+
+        vaga.setBannerDaVaga(caminhoBanner);
 
         return vagaRepository.save(vaga);
     }
-    public Vaga criar(Vaga vaga) {
+    @Transactional
+    public Vaga criarVaga(Vaga vaga) {
+        Usuario logado = usuarioService.getUsuarioLogado();
 
-        vaga.setDataCriacao(LocalDateTime.now());
-
-        if (vaga.getStatus() == null) {
-            vaga.setStatus(StatusVaga.ATIVA);
+        vaga.setCriador(logado);
+        // RH cadastra vaga INATIVA por padrão
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.RH) {
+            vaga.setStatus(StatusVaga.INATIVA);
         }
 
-
         return vagaRepository.save(vaga);
     }
-
     public Optional<Vaga> atualizar(Long id, Vaga dados) {
         return vagaRepository.findById(id).map(v -> {
 

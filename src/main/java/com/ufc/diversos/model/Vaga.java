@@ -77,6 +77,10 @@ public class Vaga {
     )
     private List<Habilidade> habilidades;
 
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario criador;
+
     public enum StatusVaga {
         ATIVA,
         PREENCHIDA,

@@ -46,49 +46,52 @@ public class SecurityConfig {
                 // Define que não haverá sessão no servidor (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Regras de acesso (Quem pode acessar o quê)
+                // ... (código anterior igual)
+
+// Regras de acesso (Quem pode acessar o quê)
                 .authorizeHttpRequests(auth -> auth
 
-                        // --- 1. ROTAS PÚBLICAS (Qualquer um acessa) ---
-                        .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll() // Fotos de perfil/banners
-                        .requestMatchers("/auth/login").permitAll()                 // Login
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()  // Cadastro (Registro)
-                        .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll() // Confirmação de E-mail
+                        // --- 1. ROTAS PÚBLICAS ---
+                        .requestMatchers(HttpMethod.GET, "/imagens/**").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/confirmar").permitAll()
                         .requestMatchers("/error").permitAll()
-                        // Leitura de dados públicos
+
+                        // Leitura pública (Qualquer um, inclusive RH, pode VER notícias e grupos, mas não editar)
                         .requestMatchers(HttpMethod.GET, "/vagas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/noticias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/habilidades/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/grupos/**").permitAll() // Caso queira listar grupos publicamente
+                        .requestMatchers(HttpMethod.GET, "/grupos/**").permitAll()
 
-                        // --- 2. ROTAS DO USUÁRIO LOGADO (Qualquer perfil) ---
+                        // --- 2. ROTAS DO USUÁRIO LOGADO ---
                         .requestMatchers("/usuarios/me/**").authenticated()
 
-                        // --- 3. REGRAS DE ADMIN / MODERADOR (Escrita/Deleção) ---
-
-                        // Vagas (Criar, Editar, Deletar)
-                        .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.PUT, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        // --- 3. REGRAS DO RH (Vagas específicas) ---
+                        // RH pode Criar e Editar vagas, mas não pode Deletar (opcional, conforme sua regra)
+                        .requestMatchers(HttpMethod.POST, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR", "RH")
+                        .requestMatchers(HttpMethod.PUT, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR", "RH")
+                        // Deletar vaga costuma ser apenas ADMIN/MODERADOR
                         .requestMatchers(HttpMethod.DELETE, "/vagas/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Notícias
+                        // --- 4. BLOQUEIOS PARA O RH (Recursos restritos a ADMIN/MODERADOR) ---
+
+                        // Notícias: RH não pode Criar, Editar ou Deletar (POST, PUT, DELETE)
                         .requestMatchers("/noticias/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Grupos (Criar, Editar, Deletar)
-                        .requestMatchers(HttpMethod.POST, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.PUT, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        // Grupos: RH não tem acesso à gestão
+                        .requestMatchers("/grupos/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Habilidades
-                        .requestMatchers(HttpMethod.POST, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        // Habilidades: Gestão apenas para superiores
+                        .requestMatchers("/habilidades/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // Gestão de Usuários (Ex: Listar todos, banir alguém pelo ID)
-                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "MODERADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
+                        // Gestão de Usuários: RH não pode listar nem gerenciar outros usuários
+                        .requestMatchers("/usuarios/**").hasAnyRole("ADMINISTRADOR", "MODERADOR")
 
-                        // --- 4. BLOQUEIO PADRÃO (Tudo que não foi listado acima exige login) ---
+                        // --- 5. BLOQUEIO PADRÃO ---
                         .anyRequest().authenticated()
                 )
+//
                 // Adiciona o nosso filtro de Token antes do filtro padrão do Spring
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

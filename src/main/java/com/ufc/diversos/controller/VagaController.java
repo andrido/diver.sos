@@ -29,8 +29,8 @@ public class VagaController {
     }
 
     @GetMapping
-    public List <Vaga> getAll(){
-        return vagaService.listarTodasAsVagas();
+    public List<Vaga> getAll() {
+        return vagaService.listarVagasParaDashboard();
     }
 
 
@@ -43,7 +43,7 @@ public class VagaController {
 
     @PostMapping
     public ResponseEntity<Vaga> createVaga(@Valid @RequestBody Vaga vaga) {
-        return ResponseEntity.ok(vagaService.criar(vaga));
+        return ResponseEntity.ok(vagaService.criarVaga(vaga));
     }
 
     @PutMapping("/{id}")

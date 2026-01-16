@@ -27,6 +27,10 @@ public interface VagaRepository extends JpaRepository<Vaga, Long> {
             @Param("cidade") String cidade);
 
     List<Vaga> findByStatus(StatusVaga status);
+
+    List<Vaga> findByCriadorId(Integer criadorId);
 }
+
+
 
 
