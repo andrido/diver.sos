@@ -45,11 +45,10 @@ public class AuthController {
     // --- ROTA DE RECUPERAÇÃO DE SENHA ---
     @PostMapping("/esqueci-senha")
     public ResponseEntity<String> solicitarMudancaDeSenha(@RequestBody String email) {
-        String emailLimpo = email.replace("\"", "").trim();
-        usuarioService.solicitarRecuperacaoSenha(emailLimpo);
+
+        usuarioService.solicitarRecuperacaoSenha(email);
         return ResponseEntity.ok("E-mail de recuperação enviado!");
     }
-
     @PostMapping("/nova-senha")
     public ResponseEntity<String> definirNovaSenha (@RequestParam String token, @RequestBody ResetSenhaRequestDTO dto) {
 
