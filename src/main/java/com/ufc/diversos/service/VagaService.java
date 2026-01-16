@@ -4,7 +4,7 @@ import com.ufc.diversos.model.Habilidade;
 import com.ufc.diversos.model.TipoDeUsuario;
 import com.ufc.diversos.model.Usuario;
 import com.ufc.diversos.model.Vaga;
-// Importando os Enums para não precisar escrever Vaga.StatusVaga toda hora no código
+
 import com.ufc.diversos.model.Vaga.StatusVaga;
 import com.ufc.diversos.model.Vaga.TipoVaga;
 import com.ufc.diversos.model.Vaga.ModalidadeVaga;
@@ -51,14 +51,17 @@ public class VagaService {
         Usuario logado = usuarioService.getUsuarioLogado();
 
 
-        if (logado.getTipoDeUsuario() == com.ufc.diversos.model.TipoDeUsuario.RH) {
+        if (logado == null) {
+            return new ArrayList<>();
+        }
+
+        if (logado.getTipoDeUsuario() == TipoDeUsuario.RH) {
+
             return vagaRepository.findByCriadorId(logado.getId());
         }
 
-
         return vagaRepository.findAll();
     }
-
 
     public List<Vaga> buscarComFiltros(String termo, ModalidadeVaga modalidade, TipoVaga tipo, String cidade) {
         return vagaRepository.buscarComFiltros(termo, modalidade, tipo, cidade);
