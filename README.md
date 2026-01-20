@@ -53,7 +53,6 @@ Para facilitar o uso, disponibilizamos um executável (`.exe`) que não exige co
 1. **Baixe a pasta** do projeto (Release) e extraia em seu computador.
 2. Certifique-se de que a estrutura da pasta contém os seguintes arquivos juntos:
    - `diverSOS.exe` (O aplicativo)
-   - `diversos-backend.jar` (O sistema)
    - `.env` (Configurações)
 
 3. **Configure o Banco de Dados:**
