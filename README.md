@@ -1,64 +1,61 @@
-# diver.sos - Back-end
+<img width="1080" height="1091" alt="image" src="https://github.com/user-attachments/assets/0a7c567f-89c9-4f81-94d1-e63c2ccafa0c" /><h1 align="center">diver.sos - Back-end</h1>
 
-API REST desenvolvida para a plataforma **diver.sos**, responsável por gerenciar a inteligência, segurança e persistência de dados para a comunidade LGBTQIAPN+.
+<p align="center">
+  <img width="286.56" height="229.92" alt="Logo diver.sos" src="https://github.com/user-attachments/assets/3bccd4c7-386d-401e-b7fb-2b422c53b3c2" />
+</p>
+
+<p align="center">
+  API REST responsável por gerenciar a inteligência, segurança e persistência de dados para a comunidade LGBTQIAPN+.
+</p>
+
+---
 
 ## 🧠 Sobre o projeto
 
-O back-end do diver.sos fornece a infraestrutura necessária para a listagem de vagas, grupos de apoio e notícias, além de gerenciar a autenticação e permissões de usuários. A API foi desenvolvida pela equipe Atemporal como parte do Projeto Integrado I da Universidade Federal do Ceará (UFC).
+> O back-end do **diver.sos** fornece a infraestrutura necessária para a listagem de vagas, grupos de apoio e notícias, além de gerenciar a autenticação e permissões de usuários.
+>
+> A API foi desenvolvida pela equipe **Atemporal** como parte do Projeto Integrado I da Universidade Federal do Ceará (UFC).
+
+---
 
 ## 🚀 Funcionalidades Principais
 
-* **Gestão de Usuários:** Autenticação via JWT (JSON Web Token) e controle de acesso baseado em cargos (ADMIN, MODERADOR, RH, USUARIO).
-* **Recuperação de Senha:** Fluxo automatizado com envio de e-mail e tokens de segurança temporários.
-* **Gestão de Conteúdo:** CRUD de vagas, grupos, notícias e habilidades.
-* **Upload de Arquivos:** Processamento e armazenamento de imagens para perfis, banners e notícias.
-* **Favoritos:** Sistema de persistência de conteúdos salvos por usuário.
+- **Gestão de Usuários:** Autenticação via JWT e controle de acesso (RBAC).
+- **Recuperação de Senha:** Fluxo automatizado via e-mail.
+- **Gestão de Conteúdo:** CRUD completo de vagas, grupos e notícias.
+- **Upload de Arquivos:** Gerenciamento de imagens e perfis.
 
-## 🛠️ Tecnologias Utilizadas
+---
 
-* **Linguagem:** Java 17
-* **Framework:** Spring Boot 3.x
-* **Segurança:** Spring Security & JWT
-* **Banco de Dados:** MySQL / PostgreSQL
-* **Serviço de E-mail:** Spring Mail (SMTP)
+<h3 align="center">Tecnologias Utilizadas</h3>
 
-## ⚙️ Instalação e Execução (Via Release)
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java" width="45"/>
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg" alt="Spring Boot" width="45"/>
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" alt="MySQL" width="45"/>
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/maven/maven-original.svg" alt="Maven" width="45"/>
+</p>
 
-Para facilitar o uso, disponibilizamos o executável da aplicação nas [Releases](https://github.com/seu-usuario/seu-repositorio/releases).
+---
+
+## ⚙️ Instalação e Execução Simplificada (Windows)
+
+Para facilitar o uso, disponibilizamos um executável (`.exe`) que não exige comandos no terminal.
 
 ### 📋 Pré-requisitos
-* **Java Runtime Environment (JRE) 17** ou superior instalado e configurado no PATH.
-* Banco de Dados MySQL rodando localmente.
+1.  **Java Runtime Environment (JRE) 22** ou superior instalado.
+2.  **MySQL Server** instalado e rodando (ou acesso a um banco na nuvem).
 
-### ▶️ Como rodar
-1.  Baixe o arquivo `diversos-backend.zip` na aba de Releases.
-2.  Extraia o conteúdo em uma pasta.
-3.  Certifique-se de que o seu banco de dados está criado (ex: `diversos_db`).
-4.  Execute o arquivo `run.bat` (Windows) ou o comando abaixo no terminal:
-    ```bash
-    java -jar diversos-backend.jar
-    ```
+---
 
-A API estará disponível em: `http://localhost:8080`
+### 📦 Como Rodar
 
-## 🔐 Configuração das Variáveis de Ambiente
+1. **Baixe a pasta** do projeto (Release) e extraia em seu computador.
+2. Certifique-se de que a estrutura da pasta contém os seguintes arquivos juntos:
+   - `diverSOS.exe` (O aplicativo)
+   - `.env` (Configurações)
 
-O arquivo `.bat` ou o sistema operacional deve conter as seguintes variáveis para o funcionamento correto:
-
-| Variável | Descrição |
-| :--- | :--- |
-| `DB_URL` | URL de conexão do banco (ex: `jdbc:mysql://localhost:3306/diversos_db`) |
-| `DB_USERNAME` | Usuário do banco de dados |
-| `DB_PASSWORD` | Senha do banco de dados |
-| `MAIL_USERNAME` | E-mail para envio de recuperação de senha |
-| `MAIL_PASSWORD` | Senha de aplicativo do e-mail (SMTP) |
-| `JWT_SECRET` | Chave mestra para criptografia dos tokens |
-
-## 📁 Estrutura do Executável
-Ao baixar a release, você encontrará:
-* `diversos-backend.jar`: O executável Java.
-* `run.bat`: Script para execução rápida no Windows.
-* `/uploads`: Pasta onde serão armazenadas as imagens enviadas para a plataforma.
-
-## 🔗 Repositório do Front-end
-[Acesse o repositório do Front-end aqui](https://github.com/seu-usuario/seu-repo-frontend)
+3. **Configure o Banco de Dados:**
+   Abra seu gerenciador MySQL e crie o banco:
+   ```sql
+   CREATE DATABASE diversos;
