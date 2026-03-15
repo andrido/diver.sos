@@ -22,14 +22,12 @@ public class ArquivoService {
         }
 
         try {
-            // 1. Cria o caminho: uploads/perfis/
             Path pastaDestino = diretorioRaiz.resolve(subDiretorio);
             if (!Files.exists(pastaDestino)) {
                 Files.createDirectories(pastaDestino);
             }
 
-            // 2. Gera nome único para evitar cache do navegador e sobreposição
-            // Ex: user_1_uuid.jpg
+
             String nomeOriginal = arquivo.getOriginalFilename();
             String extensao = "";
             if (nomeOriginal != null && nomeOriginal.contains(".")) {
@@ -37,12 +35,10 @@ public class ArquivoService {
             }
             String nomeArquivo = UUID.randomUUID().toString() + extensao;
 
-            // 3. Copia o arquivo para a pasta (Substitui se existir igual)
+
             Path caminhoArquivo = pastaDestino.resolve(nomeArquivo);
             Files.copy(arquivo.getInputStream(), caminhoArquivo, StandardCopyOption.REPLACE_EXISTING);
 
-            // 4. Retorna o caminho relativo para salvar no banco
-            // Retorna: /imagens/perfis/nome-do-arquivo.jpg
             return "/imagens/" + subDiretorio + "/" + nomeArquivo;
 
         } catch (IOException e) {

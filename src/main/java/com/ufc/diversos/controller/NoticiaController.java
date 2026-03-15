@@ -2,6 +2,7 @@ package com.ufc.diversos.controller;
 
 import com.ufc.diversos.model.Noticia;
 import com.ufc.diversos.service.NoticiaService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +19,16 @@ public class NoticiaController {
     }
 
     @GetMapping
-    public List<Noticia> listar() {
-        return noticiaService.listarTodas();
+    public ResponseEntity<Page<Noticia>> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String titulo) {
+
+        if (titulo != null && !titulo.isBlank()) {
+            return ResponseEntity.ok(noticiaService.buscarPorTitulo(titulo, page, size));
+        }
+
+        return ResponseEntity.ok(noticiaService.listarTodas(page, size));
     }
 
     @GetMapping("/{id}")

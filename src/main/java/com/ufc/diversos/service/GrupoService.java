@@ -3,6 +3,10 @@ package com.ufc.diversos.service;
 import com.ufc.diversos.model.Grupo;
 import com.ufc.diversos.repository.GrupoRepository;
 import com.ufc.diversos.repository.UsuarioRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,18 +20,21 @@ public class GrupoService {
     private final ArquivoService arquivoService;
     private final UsuarioRepository usuarioRepository;
 
-    // CORREÇÃO 1: Faltava a chave '{' aqui no começo
-    public GrupoService(GrupoRepository grupoRepository,
-                        ArquivoService arquivoService,
-                        UsuarioRepository usuarioRepository) {
+
+    public GrupoService(GrupoRepository grupoRepository, ArquivoService arquivoService, UsuarioRepository usuarioRepository) {
         this.grupoRepository = grupoRepository;
-        // CORREÇÃO 2: Usa o serviço injetado pelo Spring, não cria um 'new'
         this.arquivoService = arquivoService;
         this.usuarioRepository = usuarioRepository;
     }
 
-    public List<Grupo> listarTodos() {
-        return grupoRepository.findAll();
+    public Page<Grupo> listarTodos(int pagina, int tamanho) {
+        // Ordenando por nome por padrão, já que é uma listagem de grupos
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        return grupoRepository.findAll(pageable);
+    }
+    public Page<Grupo> buscarPorCategoria(String categoria, int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        return grupoRepository.findByCategoria(categoria, pageable);
     }
 
     public Optional<Grupo> buscarPorId(Long id) {
@@ -38,14 +45,14 @@ public class GrupoService {
         return grupoRepository.save(grupo);
     }
 
-    // CORREÇÃO 3: Adicionado @Transactional e a limpeza dos favoritos
+
     @Transactional
     public boolean deletar(Long id) {
         if (grupoRepository.existsById(id)) {
-            // 1. Limpa quem favoritou esse grupo antes de apagar
+
             usuarioRepository.removerGrupoDosFavoritos(id);
 
-            // 2. Agora deleta o grupo sem erro de constraint
+
             grupoRepository.deleteById(id);
             return true;
         }
@@ -53,14 +60,9 @@ public class GrupoService {
     }
 
     public Grupo atualizar(Long id, Grupo dadosNovos) {
-        // 1. Busca o dado antigo no banco
         Grupo grupoExistente = grupoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
 
-        // 2. DEBUG
-        System.out.println("Recebido para atualizar: " + dadosNovos.getNome());
-
-        // 3. Atualiza TODOS os campos
         grupoExistente.setNome(dadosNovos.getNome());
         grupoExistente.setDescricao(dadosNovos.getDescricao());
         grupoExistente.setLink(dadosNovos.getLink());
@@ -69,12 +71,12 @@ public class GrupoService {
         grupoExistente.setEstado(dadosNovos.getEstado());
         grupoExistente.setResponsavel(dadosNovos.getResponsavel());
 
-        // Se a foto vier como string (URL) no JSON e não via upload separado:
+
         if (dadosNovos.getBannerDoGrupo() != null) {
             grupoExistente.setBannerDoGrupo(dadosNovos.getBannerDoGrupo());
         }
 
-        // 4. Salva as alterações
+
         return grupoRepository.save(grupoExistente);
     }
 
@@ -83,10 +85,8 @@ public class GrupoService {
         Grupo grupo = grupoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
 
-        // 1. Salva na pasta "uploads/grupos"
         String caminhoFoto = arquivoService.salvarArquivo(arquivo, "grupos");
 
-        // 2. Atualiza o banco
         grupo.setBannerDoGrupo(caminhoFoto);
 
         return grupoRepository.save(grupo);

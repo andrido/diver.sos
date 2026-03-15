@@ -2,6 +2,10 @@ package com.ufc.diversos.service;
 
 import com.ufc.diversos.model.*;
 import com.ufc.diversos.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -43,7 +47,7 @@ public class UsuarioService {
         this.tokenRepository = tokenRepository;
         this.emailService = emailService;
         this.passwordEncoder = encoder;
-        this.arquivoService = new ArquivoService();
+        this.arquivoService = arquivoService;
     }
 
     // --- MÉTODOS DE SUPORTE (SEGURANÇA) ---
@@ -244,10 +248,15 @@ public class UsuarioService {
 
     // --- MÉTODOS DE LEITURA E DELEÇÃO ---
 
-    public List<Usuario> listarUsuarios() {
-        return usuarioRepository.findAll();
+    public Page<Usuario> listarUsuarios(int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        return usuarioRepository.findAll(pageable);
     }
 
+    public Page<Usuario> buscarUsuariosPorNome(String nome, int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        return usuarioRepository.findByNomeContainingIgnoreCase(nome, pageable);
+    }
     public Optional<Usuario> buscarPorId(int id) {
         return usuarioRepository.findById(id);
     }

@@ -2,6 +2,10 @@ package com.ufc.diversos.service;
 
 import com.ufc.diversos.model.Noticia;
 import com.ufc.diversos.repository.NoticiaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,8 +23,15 @@ public class NoticiaService {
         this.usuarioService = usuarioService;
     }
 
-    public List<Noticia> listarTodas() {
-        return noticiaRepository.findAll();
+    public Page<Noticia> listarTodas(int pagina, int tamanho) {
+        // Ordenação DESC (mais recente primeiro)
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("dataPublicacao").descending());
+        return noticiaRepository.findAll(pageable);
+    }
+
+    public Page<Noticia> buscarPorTitulo(String titulo, int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("dataPublicacao").descending());
+        return noticiaRepository.findByTituloContainingIgnoreCase(titulo, pageable);
     }
 
     public Optional<Noticia> buscarPorId(Long id) {

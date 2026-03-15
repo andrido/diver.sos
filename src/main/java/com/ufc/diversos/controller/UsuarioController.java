@@ -4,6 +4,7 @@ import com.ufc.diversos.model.Grupo;
 import com.ufc.diversos.model.Usuario;
 import com.ufc.diversos.model.Vaga;
 import com.ufc.diversos.service.UsuarioService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,8 +30,16 @@ public class UsuarioController {
 
     // Apenas ADMIN/MOD devem acessar (configurado no SecurityConfig)
     @GetMapping
-    public List<Usuario> listarUsuarios(){
-        return usuarioService.listarUsuarios();
+    public ResponseEntity<Page<Usuario>> listarUsuarios(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nome) {
+
+        if (nome != null && !nome.isBlank()) {
+            return ResponseEntity.ok(usuarioService.buscarUsuariosPorNome(nome, page, size));
+        }
+
+        return ResponseEntity.ok(usuarioService.listarUsuarios(page, size));
     }
 
     // Apenas ADMIN/MOD devem acessar (configurado no SecurityConfig)

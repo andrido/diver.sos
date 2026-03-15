@@ -3,6 +3,7 @@ package com.ufc.diversos.controller;
 import com.ufc.diversos.model.Grupo;
 import com.ufc.diversos.service.GrupoService;
 import jakarta.validation.Valid; // Importante para o @NotBlank funcionar
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,18 @@ public class GrupoController {
 
     // Listar todos (Público)
     @GetMapping
-    public List<Grupo> listar() {
-        return grupoService.listarTodos();
+    public ResponseEntity<Page<Grupo>> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(grupoService.listarTodos(page, size));
+    }
+
+    @GetMapping("/categoria/{categoria}")
+    public ResponseEntity<Page<Grupo>> listarPorCategoria(
+            @PathVariable String categoria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(grupoService.buscarPorCategoria(categoria, page, size));
     }
 
     // Buscar um (Público)

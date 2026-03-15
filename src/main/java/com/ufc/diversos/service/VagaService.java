@@ -8,6 +8,10 @@ import com.ufc.diversos.model.Vaga.TipoVaga;
 import com.ufc.diversos.model.Vaga.ModalidadeVaga;
 import com.ufc.diversos.repository.UsuarioRepository;
 import com.ufc.diversos.repository.VagaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.ufc.diversos.repository.HabilidadeRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,13 +38,15 @@ public class VagaService {
         this.habilidadeRepository = habilidadeRepository;
         this.usuarioRepository = usuarioRepository;
     }
-    public List<Vaga> listarTodas() {
-        return vagaRepository.findByStatus(StatusVaga.ATIVA);
+    public Page<Vaga> listarTodas(int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
+        return vagaRepository.findByStatus(StatusVaga.ATIVA, pageable);
     }
 
 
-    public List<Vaga> buscarComFiltros(String termo, ModalidadeVaga modalidade, TipoVaga tipo, String cidade) {
-        return vagaRepository.buscarComFiltros(termo, modalidade, tipo, cidade);
+    public Page<Vaga> buscarComFiltros(String termo, ModalidadeVaga modalidade, TipoVaga tipo, String cidade, int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
+        return vagaRepository.buscarComFiltros(termo, modalidade, tipo, cidade, pageable);
     }
 
     public Optional<Vaga> buscarPorId(Long id) {
@@ -112,11 +118,9 @@ public class VagaService {
     }
     public boolean deletar(Long id) {
         if (vagaRepository.existsById(id)) {
-            // 1. Limpa quem favoritou essa vaga
             usuarioRepository.removerVagaDosFavoritos(id);
 
-            // 2. Agora deleta a vaga sem erro
-            vagaRepository.deleteById(id);
+                 vagaRepository.deleteById(id);
             return true;
         }
         return false;

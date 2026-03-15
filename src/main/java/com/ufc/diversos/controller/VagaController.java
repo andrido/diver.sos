@@ -1,17 +1,12 @@
 package com.ufc.diversos.controller;
 
 import com.ufc.diversos.model.Vaga;
-import com.ufc.diversos.repository.VagaRepository;
 import com.ufc.diversos.service.VagaService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // Importante ser este
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/vagas")
@@ -23,9 +18,12 @@ public class VagaController {
         this.vagaService = vagaService;
     }
 
+
     @GetMapping
-    public List<Vaga> getAll() {
-        return vagaService.listarTodas();
+    public ResponseEntity<Page<Vaga>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(vagaService.listarTodas(page, size));
     }
 
     @GetMapping("/{id}")
@@ -54,25 +52,23 @@ public class VagaController {
                 : ResponseEntity.notFound().build();
     }
 
+
     @GetMapping("/buscar")
-    public List<Vaga> buscarVagas(
+    public ResponseEntity<Page<Vaga>> buscarVagas(
             @RequestParam(required = false) String termo,
             @RequestParam(required = false) Vaga.ModalidadeVaga modalidade,
             @RequestParam(required = false) Vaga.TipoVaga tipo,
-            @RequestParam(required = false) String cidade) {
+            @RequestParam(required = false) String cidade,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        // Chame o método de busca
-        return vagaService.buscarComFiltros(termo, modalidade, tipo, cidade);
+        return ResponseEntity.ok(vagaService.buscarComFiltros(termo, modalidade, tipo, cidade, page, size));
     }
 
     @PostMapping("/{id}/foto")
     public ResponseEntity<Vaga> uploadBanner(@PathVariable Long id,
-                                             @RequestParam("arquivo") org.springframework.web.multipart.MultipartFile arquivo) {
-
-
+                                             @RequestParam("arquivo") MultipartFile arquivo) {
         Vaga vagaAtualizada = vagaService.atualizarBannerVaga(id, arquivo);
-
         return ResponseEntity.ok(vagaAtualizada);
     }
-
 }

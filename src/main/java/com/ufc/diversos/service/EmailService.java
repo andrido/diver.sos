@@ -14,7 +14,7 @@ public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender mailSender;
 
-    // Pega o email do remetente direto do application.yml para não hardcoded
+
     @Value("${app.mail.from}")
     private String remetente;
 
@@ -30,8 +30,6 @@ public class EmailService {
             message.setTo(emailDestino);
             message.setSubject("Confirmação de Conta - UFC Diversos");
 
-            // Link apontando para o seu Backend (que pode redirecionar pro front)
-            // Ou apontando direto pro Front se preferir: http://localhost:5173/confirmar?token=...
             String link = "http://localhost:8080/auth/confirmar?token=" + token;
 
             String texto = """
